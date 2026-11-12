@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f5ee">
+  <title>Sudoku — Little moments of clarity</title>
+  <style>
+    :root{--ink:#233a43;--muted:#84939a;--teal:#277d74;--teal-dark:#17685f;--teal-soft:#e4f1eb;--coral:#ed9273;--paper:#f7f5ee;--line:#e2e9e5;--white:#fff;--shadow:0 24px 70px rgba(39,74,70,.095);font-family:Inter,"Avenir Next",Avenir,"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--paper)}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;overflow-x:hidden}button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #eaa483;outline-offset:3px}body{background:radial-gradient(circle at 8% 10%,#fffdf6 0,transparent 38%),radial-gradient(circle at 92% 84%,#edf3e9 0,transparent 36%),var(--paper)}
+    .backdrop-art{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}.orb{position:absolute;border-radius:50%;filter:blur(1px);opacity:.7}.orb.a{width:310px;height:310px;left:-155px;top:29%;background:#e8eee3}.orb.b{width:480px;height:480px;right:-275px;top:-220px;border:90px solid #f3e9dc;background:transparent}.orb.c{width:155px;height:155px;right:9%;bottom:-85px;background:#f4e7d8}.sparkle{position:absolute;color:#d5dcd0;font-size:27px}.sparkle.one{left:9%;top:21%}.sparkle.two{right:8%;top:47%;font-size:18px}
+    .app{position:relative;z-index:1;max-width:1370px;margin:0 auto;padding:0 38px 40px}.topbar{height:91px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(34,64,64,.09)}.brand{display:flex;align-items:center;gap:12px;white-space:nowrap}.brand-mark{width:38px;height:38px;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:7px;border-radius:12px;background:var(--teal);box-shadow:0 8px 18px #277d7433;transform:rotate(-8deg)}.brand-mark i{background:#fff;border-radius:2px;opacity:.96}.brand-mark i:nth-child(2),.brand-mark i:nth-child(4),.brand-mark i:nth-child(9){opacity:.34}.brand-name{font-size:19px;font-weight:800;letter-spacing:-.06em}.brand-name span{color:var(--teal)}.top-right{display:flex;align-items:center;gap:15px}.header-label{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}.lang-switch{display:flex;padding:4px;border-radius:13px;background:#ebece6;gap:2px}.lang-switch button{border:0;color:#87928e;background:transparent;font-size:11px;font-weight:800;letter-spacing:.08em;padding:8px 10px;border-radius:9px;transition:.2s}.lang-switch button.active{background:white;color:var(--teal);box-shadow:0 2px 7px #1d3d3517}
+    .layout{display:grid;grid-template-columns:minmax(190px,1fr) minmax(420px,520px) minmax(205px,1fr);gap:clamp(22px,3.5vw,52px);align-items:start;margin-top:49px}.intro{padding-top:48px}.eyebrow{display:flex;align-items:center;gap:9px;color:var(--teal);text-transform:uppercase;font-size:11px;font-weight:800;letter-spacing:.21em}.eyebrow:before{content:"";width:21px;height:2px;background:var(--coral);border-radius:5px}.intro h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(37px,3.5vw,55px);font-weight:400;line-height:1.11;letter-spacing:-.05em;margin:23px 0 20px;max-width:270px}.intro h1 em{font-style:italic;color:var(--teal)}.intro-copy{font-size:14px;line-height:1.85;color:#84928e;max-width:230px;margin:0}.intro-footer{margin-top:85px;display:flex;align-items:center;gap:13px}.intro-flower{font-family:Georgia,serif;font-size:32px;color:var(--coral);line-height:1}.intro-footer span{font-size:11px;color:#96a19a;line-height:1.5;max-width:115px}
+    .game-card{background:rgba(255,255,255,.94);border:1px solid #ffffff;box-shadow:var(--shadow);border-radius:29px;padding:24px 25px 23px;position:relative}.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.level-kicker{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.15em;text-transform:uppercase}.level-title{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:27px;letter-spacing:-.035em;margin:4px 0 0}.round-icon{width:38px;height:38px;display:grid;place-items:center;background:#f3f6f1;color:var(--teal);border:0;border-radius:12px;transition:transform .2s,background .2s}.round-icon:hover{transform:rotate(35deg);background:var(--teal-soft)}.round-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.difficulties{display:flex;gap:5px;background:#f5f7f3;padding:5px;border-radius:13px;margin-bottom:18px}.difficulties button{flex:1;border:0;background:transparent;border-radius:9px;padding:9px 4px;color:#929f9d;font-size:12px;font-weight:750;transition:.2s}.difficulties button:hover{color:var(--teal)}.difficulties button.active{background:var(--white);color:var(--teal);box-shadow:0 2px 8px #193a2c12}
+    .board-wrap{position:relative;border-radius:10px}.board{width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(9,minmax(0,1fr));overflow:hidden;border:2px solid #637b79;border-radius:7px;background:#fff;box-shadow:0 8px 24px #336b5a0a}.cell{min-width:0;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;border:0;border-right:1px solid #dce7e3;border-bottom:1px solid #dce7e3;background:#fff;color:#387a71;font-weight:550;font-size:clamp(18px,2.1vw,27px);font-variant-numeric:tabular-nums;transition:background-color .15s,color .15s,box-shadow .15s;outline:0;padding:0;line-height:1}.cell:nth-child(9n+3),.cell:nth-child(9n+6){border-right:2px solid #77918d}.cell:nth-child(n+19):nth-child(-n+27),.cell:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid #77918d}.cell:nth-child(9n){border-right:0}.cell:nth-child(n+73){border-bottom:0}.cell.given{font-weight:800;color:#2d4650}.cell.peer{background:#f2f7f3}.cell.same{background:#e2f0e8;color:var(--teal-dark)}.cell.selected{background:#cce7dc;color:#16594f;box-shadow:inset 0 0 0 2px #4a9886;z-index:1}.cell.wrong{background:#fff0ea;color:#d56f56}.cell.wrong.selected{box-shadow:inset 0 0 0 2px #e88d70}.cell:hover:not(.selected){background:#eaf3ec}.cell.hinted{animation:hintPulse .65s ease-out}.board.fresh .cell{animation:cellIn .32s both;animation-delay:calc(var(--order) * 3ms)}@keyframes cellIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}@keyframes hintPulse{0%,100%{filter:brightness(1)}45%{filter:brightness(.86);background:#f5dfab}}.notes-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:88%;height:88%;align-items:center;justify-items:center;color:#73938b;font-size:clamp(8px,.82vw,11px);font-weight:700;line-height:1}.cell.selected .notes-grid{color:#216f62}
+    .keypad{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-top:19px}.key{border:0;border-radius:11px;background:#f5f8f4;color:#327d70;min-width:0;height:53px;font-size:25px;font-weight:550;transition:.18s;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}.key small{font-size:9px;color:#9cab9e;margin-top:3px;font-weight:800}.key:hover:not(:disabled){background:#e2f2e8;transform:translateY(-3px)}.key:active:not(:disabled){transform:translateY(0)}.key:disabled{opacity:.35;cursor:default}.key.active{background:var(--teal);color:#fff}.key.active small{color:#cce4dc}
+    .side{padding-top:6px}.side-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:27px}.side-heading{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:#7c918d;font-weight:800}.side-star{font-family:Georgia,serif;font-size:21px;color:var(--coral)}.stat-card{border-radius:19px;background:#fff;box-shadow:0 13px 32px #39756a0b;padding:18px 19px;margin-bottom:12px;border:1px solid #fff}.stat-label{font-size:11px;font-weight:750;color:#9aa7a2;letter-spacing:.09em;text-transform:uppercase}.stat-row{display:flex;align-items:center;gap:9px;margin-top:7px}.stat-value{font-size:25px;letter-spacing:-.05em;font-weight:760;font-variant-numeric:tabular-nums}.stat-icon{width:22px;height:22px;color:#91aea3;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.progress-row{display:flex;align-items:center;justify-content:space-between;margin-top:9px}.progress-value{font-size:11px;font-weight:800;color:var(--teal)}.progress-track{height:7px;border-radius:20px;background:#eaf1e9;margin-top:11px;overflow:hidden}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#64b49b,#277d74);border-radius:20px;transition:width .45s}.tools-title{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:#7c918d;font-weight:800;margin:32px 0 14px}.tools{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.tool{min-height:90px;background:#fff;border:1px solid #f0f2ed;border-radius:16px;color:#53736f;text-align:left;padding:13px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;transition:.2s;box-shadow:0 8px 18px #39756a08}.tool:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 12px 24px #39756a18}.tool:disabled{opacity:.4;cursor:default}.tool.on{border-color:#9bcbb8;background:#e6f3e9;color:#166d5e}.tool svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.tool span{font-size:11px;font-weight:750}.tool small{color:#95a8a2;font-size:10px}.tip{padding:19px;margin-top:22px;border-radius:17px;background:#eaf1e9;color:#66837a;font-size:12px;line-height:1.65}.tip b{display:block;color:#307d70;margin-bottom:4px;font-size:11px;letter-spacing:.09em;text-transform:uppercase}.mobile-stats{display:none}
+    .footer{font-size:11px;color:#acb6ac;letter-spacing:.035em;text-align:center;margin-top:29px}.toast{position:fixed;z-index:10;left:50%;bottom:32px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#263f43;color:#fff;padding:12px 20px;border-radius:12px;font-size:12px;font-weight:700;box-shadow:0 15px 30px #19383236;transition:.3s;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}
+    .modal-layer{position:fixed;z-index:20;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:#19342f8c;backdrop-filter:blur(7px)}.modal-layer.open{display:flex;animation:fadeIn .3s both}@keyframes fadeIn{from{opacity:0}to{opacity:1}}.modal{position:relative;text-align:center;background:#fff;border-radius:29px;width:min(100%,390px);padding:42px 34px 35px;box-shadow:0 35px 100px #152f2b3d;overflow:hidden;animation:modalIn .45s cubic-bezier(.18,1.3,.45,1) both}@keyframes modalIn{from{opacity:0;transform:translateY(24px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}.modal-art{position:relative;width:94px;height:94px;border-radius:50%;background:#e5f3e9;color:#2c8d78;margin:0 auto 21px;display:grid;place-items:center;font-family:Georgia,serif;font-size:48px}.modal-art:before,.modal-art:after{content:'✦';position:absolute;color:#e99876;font-size:22px}.modal-art:before{top:-9px;left:-35px}.modal-art:after{right:-34px;bottom:6px;font-size:16px}.modal-kicker{text-transform:uppercase;letter-spacing:.19em;font-size:10px;font-weight:800;color:#51a18b}.modal h2{font-family:Georgia,serif;font-size:35px;font-weight:400;line-height:1.1;letter-spacing:-.04em;margin:13px 0 12px}.modal p{font-size:13px;color:#90a09a;line-height:1.65;margin:0 auto 23px;max-width:280px}.modal-summary{display:flex;justify-content:center;gap:30px;border-top:1px solid #eef1eb;border-bottom:1px solid #eef1eb;padding:16px 0;margin-bottom:23px}.modal-summary strong{display:block;font-size:19px;color:#2c756b}.modal-summary span{font-size:10px;color:#99a9a2;text-transform:uppercase;letter-spacing:.09em}.primary-button{width:100%;background:var(--teal);color:white;border:0;border-radius:12px;padding:15px;font-size:13px;font-weight:800;box-shadow:0 8px 16px #2c8d782b;transition:.2s}.primary-button:hover{background:var(--teal-dark);transform:translateY(-2px)}.secondary-button{background:none;border:0;color:#92a19d;font-weight:700;font-size:12px;margin-top:17px;padding:6px}.secondary-button:hover{color:var(--teal)}.confetti{position:absolute;width:8px;height:14px;border-radius:2px;top:-20px;animation:fall 3.2s linear infinite;opacity:.75}@keyframes fall{to{transform:translateY(520px) rotate(550deg)}}
+    @media(max-width:1120px){.app{padding-left:25px;padding-right:25px}.layout{grid-template-columns:minmax(390px,520px) minmax(190px,250px);justify-content:center;gap:25px;margin-top:27px}.intro{grid-column:1/-1;padding:0;display:flex;align-items:center;justify-content:space-between;gap:20px}.intro h1{font-size:30px;max-width:none;margin:0}.intro-copy{max-width:300px}.eyebrow,.intro-footer{display:none}.side{padding-top:6px}.game-card{padding:22px}}
+    @media(max-width:720px){.app{padding:0 15px 24px}.topbar{height:70px}.header-label{display:none}.layout{display:block;margin-top:19px}.intro{display:block;margin:0 3px 18px}.intro h1{font-size:28px;line-height:1.2}.intro-copy{display:none}.game-card{padding:17px;border-radius:22px}.card-top{margin-bottom:15px}.level-title{font-size:23px}.difficulties{margin-bottom:13px}.difficulties button{font-size:11px}.cell{font-size:clamp(18px,6vw,27px)}.notes-grid{font-size:clamp(7px,2.2vw,11px)}.keypad{margin-top:13px;gap:3px}.key{height:49px;font-size:23px;border-radius:8px}.side{padding:0;margin-top:16px}.side-top,.stat-card,.tools-title,.tip{display:none}.tools{grid-template-columns:repeat(4,1fr);gap:7px}.tool{min-height:70px;padding:10px;border-radius:13px}.tool svg{width:19px;height:19px}.tool span{font-size:10px}.tool small{display:none}.mobile-stats{display:flex;justify-content:space-between;gap:8px;margin:0 1px 14px}.mobile-stat{display:flex;align-items:center;gap:6px;font-size:11px;color:#81968d}.mobile-stat b{color:var(--teal);font-size:13px}.footer{margin-top:19px}.toast{bottom:18px}.brand-name{font-size:18px}}
+    @media(max-width:370px){.app{padding-left:10px;padding-right:10px}.game-card{padding:12px}.key{height:44px}.cell{font-size:17px}.tool{padding:8px;min-height:66px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+    /* 1. Блокировка скролла страницы */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. Ограничение приложения высотой экрана */
+.app {
+  width: 100%;
+  max-width: 1280px;
+  height: 100%;
+  max-height: 100dvh;
+  margin: 0 auto;
+  padding: 6px 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 3. Компактная шапка */
+.topbar {
+  height: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+/* 4. Гибкая сетка контента */
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(300px, 460px) minmax(180px, 1fr);
+  gap: clamp(10px, 1.8vw, 30px);
+  align-items: stretch;
+  margin: 8px 0;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8px;
+  min-height: 0;
+}
+
+.intro h1 {
+  font-size: clamp(22px, 2.2vw, 36px);
+  margin: 10px 0;
+}
+
+.intro-footer {
+  margin-top: 20px;
+}
+
+/* 5. Карточка игры и гибкое поле */
+.game-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  min-height: 0;
+  padding: 12px 14px;
+  overflow: hidden;
+}
+
+.card-top, .difficulties {
+  flex-shrink: 0;
+  margin: 4px 0;
+}
+
+.board-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+
+.board {
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+  aspect-ratio: 1;
+  container-type: size;
+}
+
+.cell {
+  font-size: clamp(13px, 6cqw, 24px);
+}
+
+.notes-grid {
+  font-size: clamp(6px, 2cqw, 9px);
+}
+
+/* 6. Кнопки цифр и боковая панель */
+.keypad {
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.key {
+  height: clamp(32px, 5vh, 44px);
+  font-size: clamp(15px, 2.2vh, 20px);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 0;
+}
+
+.stat-card {
+  padding: 8px 12px;
+}
+
+.tools {
+  gap: 6px;
+}
+
+.tool {
+  min-height: 48px;
+  padding: 6px 8px;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: 2px 0;
+}
+
+/* 7. Адаптив под мобильные экраны и малую высоту без скролла */
+@media (max-width: 820px), (max-height: 580px) {
+  .app {
+    padding: 4px 8px;
+  }
+  .topbar {
+    height: 38px;
+    min-height: 38px;
+  }
+  .header-label, .intro, .footer, .side-top, .stat-card, .tools-title, .tip {
+    display: none;
+  }
+  .layout {
+    display: flex;
+    flex-direction: column;
+    margin: 4px 0;
+    gap: 4px;
+    min-height: 0;
+  }
+  .side {
+    display: contents;
+  }
+  .mobile-stats {
+    order: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 6px;
+    flex-shrink: 0;
+  }
+  .game-card {
+    order: 2;
+    padding: 8px 10px;
+  }
+  .tools {
+    order: 3;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .tool {
+    min-height: 36px;
+    height: 36px;
+    padding: 4px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .tool small {
+    display: none;
+  }
+  .key {
+    height: clamp(30px, 5.2vh, 40px);
+    font-size: clamp(14px, 2.3vh, 18px);
+  }
+}
+  </style>
+  <!-- On Yandex Games the platform serves this file at /sdk.js. Offline the game still works. -->
+  <script src="/sdk.js"></script> <script src="https://yandex.ru/games/sdk/v2"></script>
+   <script>
+
+YaGames.init({
+
+adv: {
+
+onAdvClose: wasShown => {
+
+console.info('adv closed!');
+
+}
+
+}
+
+})
+
+.then(ysdk => {
+
+//ysdk.adv.showFullscreenAdv();
+
+window.ysdk = ysdk;
+
+});
+
+
+</script>
+</head>
+<body>
+  <div class="backdrop-art" aria-hidden="true"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div><span class="sparkle one">✳</span><span class="sparkle two">✧</span></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="brand-name"><span></span></span></div>
+      <div class="top-right"><span class="header-label" data-i18n="headerLabel">A moment for your mind</span><div class="lang-switch" aria-label="Language"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div></div>
+    </header>
+    <main class="layout">
+      <section class="intro"><div><div class="eyebrow" data-i18n="eyebrow"> для себя</div><h1 data-i18n-html="hero">Найди свой <em>ритм</em> мысли.</h1></div><p class="intro-copy" data-i18n="heroCopy">Всё начинается с одной клетки. Остановись, сосредоточься и позволь логике вести тебя дальше.</p><div class="intro-footer"><span class="intro-flower" aria-hidden="true">✳</span><span data-i18n="introFooter">Небольшая пауза. Большое удовольствие.</span></div></section>
+      <section class="game-card" aria-label="Sudoku">
+        <div class="card-top"><div><div class="level-kicker" data-i18n="yourJourney">ТВОЁ ПУТЕШЕСТВИЕ</div><h2 class="level-title" id="levelTitle">Уровень 01</h2></div><button class="round-icon" id="newGame" type="button" title="Новая игра" aria-label="Новая игра"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 1-2.4-5.7M20 4v6h-6"/></svg></button></div>
+        <div class="difficulties" id="difficulties" role="group" aria-label="Сложность"><button type="button" data-difficulty="easy" data-i18n="easy">Легко</button><button type="button" data-difficulty="medium" data-i18n="medium">Средне</button><button type="button" data-difficulty="hard" data-i18n="hard">Сложно</button></div>
+        <div class="board-wrap"><div class="board" id="board" role="grid" aria-label="Судоку 9 на 9"></div></div>
+        <div class="keypad" id="keypad" role="group" aria-label="Цифры"></div>
+      </section>
+      <aside class="side"><div class="side-top"><span class="side-heading" data-i18n="atGlance">ТВОЙ ПРОГРЕСС</span><span class="side-star" aria-hidden="true">✳</span></div><div class="mobile-stats"><span class="mobile-stat"><span data-i18n="time">Время</span> <b id="mobileTime">00:00</b></span><span class="mobile-stat"><span data-i18n="mistakes">Ошибки</span> <b id="mobileMistakes">0 / 3</b></span><span class="mobile-stat"><span data-i18n="progress">Прогресс</span> <b id="mobileProgress">0%</b></span></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="time">Время</div><div class="stat-row"><svg class="stat-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="stat-value" id="timeValue">00:00</span></div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="mistakes">Ошибки</div><div class="stat-row"><svg class="stat-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg><span class="stat-value" id="mistakeValue">0 / 3</span></div></div>
+        <div class="stat-card"><div class="progress-row"><span class="stat-label" data-i18n="progress">Прогресс</span><span class="progress-value" id="progressValue">0%</span></div><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div>
+        <div class="tools-title" data-i18n="littleHelpers">ПОМОЩНИКИ</div><div class="tools">
+          <button class="tool" id="noteButton" type="button"><svg viewBox="0 0 24 24"><path d="M4 18.5V20h1.5L19 6.5 17.5 5 4 18.5ZM15.5 7l1.5 1.5M4 20h16"/></svg><span data-i18n="notes">Заметки</span><small id="noteState">Выкл.</small></button>
+          <button class="tool" id="hintButton" type="button"><svg viewBox="0 0 24 24"><path d="M9 18h6m-5 3h4M8 14c-1.3-1-2-2.5-2-4a6 6 0 0 1 12 0c0 1.5-.7 3-2 4-.8.7-1 1.5-1 2H9c0-.5-.2-1.3-1-2Z"/></svg><span data-i18n="hint">Подсказка</span><small id="hintCount">3 / 3</small></button>
+          <button class="tool" id="eraseButton" type="button"><svg viewBox="0 0 24 24"><path d="m4 14 9-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-8 8H8l-4-4a2 2 0 0 1 0-2Zm3 4h13"/></svg><span data-i18n="erase">Стереть</span><small>⌫</small></button>
+          <button class="tool" id="undoButton" type="button"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-2"/></svg><span data-i18n="undo">Отменить</span><small>Ctrl + Z</small></button>
+        </div><div class="tip"><b data-i18n="tipTitle">МАЛЕНЬКИЙ СОВЕТ</b><span data-i18n="tipBody">Каждая строка, столбец и квадрат 3×3 должны содержать цифры от 1 до 9.</span></div>
+      </aside>
+    </main><footer class="footer" data-i18n="footer">Сделано для спокойных и любопытных умов ✳</footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal-layer" id="modalLayer" role="presentation"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div id="confettiLayer" aria-hidden="true"></div><div class="modal-art" id="modalArt" aria-hidden="true">✳</div><div class="modal-kicker" id="modalKicker"></div><h2 id="modalTitle"></h2><p id="modalText"></p><div class="modal-summary"><div><strong id="modalTime">00:00</strong><span data-i18n="time">Время</span></div><div><strong id="modalMistakes">0</strong><span data-i18n="mistakes">Ошибки</span></div></div><button class="primary-button" id="modalPrimary" type="button"></button><button class="secondary-button" id="modalSecondary" type="button"></button></div></div>
+  <script>
+  'use strict';
+  // Main locale variable. The Yandex SDK sets it from environment.i18n.lang when available.
+  // To use a fixed language outside Yandex Games, change 'ru' to 'en'.
+  let language = 'ru';
+  const STR = {
+    ru:{headerLabel:'Отдых для себя',eyebrow:'Отдых для себя',hero:'Найди свой <em>ритм</em> мысли.',heroCopy:'Всё начинается с одной клетки. Остановись, сосредоточься и позволь логике вести тебя дальше.',introFooter:'Небольшая пауза. Большое удовольствие.',yourJourney:'ТВОЁ ПУТЕШЕСТВИЕ',level:'Уровень',easy:'Легко',medium:'Средне',hard:'Сложно',atGlance:'ТВОЙ ПРОГРЕСС',time:'Время',mistakes:'Ошибки',progress:'Прогресс',littleHelpers:'ПОМОЩНИКИ',notes:'Заметки',hint:'Подсказка',erase:'Стереть',undo:'Отменить',tipTitle:'МАЛЕНЬКИЙ СОВЕТ',tipBody:'Каждая строка, столбец и квадрат 3×3 должны содержать цифры от 1 до 9.',footer:'Сделано для спокойных и любопытных умов ✳',on:'Вкл.',off:'Выкл.',newGame:'Новая игра',board:'Судоку 9 на 9',numbers:'Цифры',difficulty:'Сложность',cell:'Строка {r}, столбец {c}',fixed:'дано',empty:'пусто',wrong:'ошибка',noteToast:'Режим заметок включён',noteOffToast:'Режим заметок выключен',selectCell:'Сначала выбери клетку',fixedCell:'Эту цифру нельзя изменить',noHints:'Подсказки закончились',noMoves:'Нечего отменять',correct:'Отлично!',winKicker:'ГОЛОВОЛОМКА РЕШЕНА',winTitle:'Блестящая работа!',winText:'Ещё одна маленькая победа. Сделай вдох — ты это заслужил.',nextLevel:'Следующий уровень',playAgain:'Ещё одну игру',loseKicker:'НИЧЕГО СТРАШНОГО',loseTitle:'Попробуем снова?',loseText:'Ошибки — тоже часть пути. Новая попытка уже ждёт тебя.',tryAgain:'Попробовать снова',newPuzzle:'Новая головоломка',confirmKicker:'НОВАЯ ИГРА',confirmTitle:'Начать заново?',confirmText:'Текущий прогресс в этой головоломке будет потерян.',startNew:'Начать новую',keepPlaying:'Продолжить игру'},
+    en:{headerLabel:'A moment for  mind',eyebrow:'A REST',hero:'Find your <em>flow</em> of thought.',heroCopy:'It all starts with one little square. Pause, focus, and let logic lead the way.',introFooter:'A little pause. A lovely reward.',yourJourney:'YOUR JOURNEY',level:'Level',easy:'Easy',medium:'Medium',hard:'Hard',atGlance:'AT A GLANCE',time:'Time',mistakes:'Mistakes',progress:'Progress',littleHelpers:'LITTLE HELPERS',notes:'Notes',hint:'Hint',erase:'Erase',undo:'Undo',tipTitle:'A LITTLE TIP',tipBody:'Each row, column, and 3×3 box needs the numbers 1 through 9.',footer:'Made for calm and curious minds ✳',on:'On',off:'Off',newGame:'New game',board:'9 by 9 sudoku',numbers:'Numbers',difficulty:'Difficulty',cell:'Row {r}, column {c}',fixed:'given',empty:'empty',wrong:'incorrect',noteToast:'Notes mode on',noteOffToast:'Notes mode off',selectCell:'Select a cell first',fixedCell:'This number cannot be changed',noHints:'No hints left',noMoves:'Nothing to undo',correct:'Nicely done!',winKicker:'PUZZLE COMPLETE',winTitle:'Beautifully done!',winText:'One more little victory. Take a breath — you have earned it.',nextLevel:'Next level',playAgain:'Play another',loseKicker:'NO WORRIES',loseTitle:'Try again?',loseText:'Mistakes are part of the journey. A fresh start is waiting for you.',tryAgain:'Try again',newPuzzle:'New puzzle',confirmKicker:'NEW GAME',confirmTitle:'Start over?',confirmText:'Your progress on this puzzle will be lost.',startNew:'Start a new game',keepPlaying:'Keep playing'}
+  };
+  const $=id=>document.getElementById(id);
+  const boardEl=$('board'), keypadEl=$('keypad'), modalLayer=$('modalLayer');
+  const STORAGE='littlelogic-sudoku-v1';
+  let sdk=null, gameplayRunning=false, adOpen=false, transitioning=false, platformPaused=false;
+  let state={level:1,difficulty:'easy',solution:[],puzzle:[],values:[],notes:Array(81).fill(0),selected:40,mistakes:0,hintsUsed:0,seconds:0,history:[],status:'playing',noteMode:false};
+  let modalType=null, toastTimer=null, highlightedHint=-1;
+  const t=k=>STR[language][k];
+  const fmt=n=>String(n).padStart(2,'0');
+  const formatTime=s=>`${fmt(Math.floor(s/60))}:${fmt(s%60)}`;
+  const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+  const box=(r,c)=>Math.floor(r/3)*3+Math.floor(c/3);
+  const peers=(i,j)=>Math.floor(i/9)===Math.floor(j/9)||i%9===j%9||box(Math.floor(i/9),i%9)===box(Math.floor(j/9),j%9);
+
+  // Generate a shuffled solved board, then remove numbers while preserving a unique solution.
+  function solvedGrid(){
+    const groups=shuffle([0,1,2]), stacks=shuffle([0,1,2]);
+    const rows=groups.flatMap(g=>shuffle([0,1,2]).map(x=>g*3+x));
+    const cols=stacks.flatMap(g=>shuffle([0,1,2]).map(x=>g*3+x));
+    const digits=shuffle([1,2,3,4,5,6,7,8,9]);
+    return rows.flatMap(r=>cols.map(c=>digits[(r*3+Math.floor(r/3)+c)%9]));
+  }
+  function solutionCount(puzzle,limit=2){
+    const rows=Array(9).fill(0),cols=Array(9).fill(0),boxes=Array(9).fill(0),FULL=0x3fe;
+    for(let i=0;i<81;i++)if(puzzle[i]){let bit=1<<puzzle[i],r=Math.floor(i/9),c=i%9,b=box(r,c);if((rows[r]|cols[c]|boxes[b])&bit)return 0;rows[r]|=bit;cols[c]|=bit;boxes[b]|=bit}
+    let count=0;
+    function search(){
+      let best=-1,bestMask=0,bestLength=10;
+      for(let i=0;i<81;i++)if(!puzzle[i]){
+        const r=Math.floor(i/9),c=i%9,b=box(r,c),mask=FULL&~(rows[r]|cols[c]|boxes[b]);
+        let n=0;for(let m=mask;m;m&=m-1)n++;
+        if(n===0)return;
+        if(n<bestLength){best=i;bestMask=mask;bestLength=n;if(n===1)break}
+      }
+      if(best===-1){count++;return}
+      const r=Math.floor(best/9),c=best%9,b=box(r,c);
+      for(let mask=bestMask;mask&&count<limit;mask&=mask-1){const bit=mask&-mask,digit=31-Math.clz32(bit);puzzle[best]=digit;rows[r]|=bit;cols[c]|=bit;boxes[b]|=bit;search();puzzle[best]=0;rows[r]^=bit;cols[c]^=bit;boxes[b]^=bit}
+    }
+    search();return count;
+  }
+  function createPuzzle(difficulty){
+    const solution=solvedGrid(),puzzle=solution.slice();
+    const target={easy:42,medium:35,hard:29}[difficulty];
+    for(const index of shuffle(Array.from({length:81},(_,i)=>i))){
+      if(puzzle.filter(Boolean).length<=target)break;
+      const previous=puzzle[index];puzzle[index]=0;
+      if(solutionCount(puzzle)!==1)puzzle[index]=previous;
+    }
+    return {solution,puzzle};
+  }
+  function save(){
+    try{localStorage.setItem(STORAGE,JSON.stringify({level:state.level,difficulty:state.difficulty,solution:state.solution,puzzle:state.puzzle,values:state.values,notes:state.notes,mistakes:state.mistakes,hintsUsed:state.hintsUsed,seconds:state.seconds,status:state.status}))}catch(e){}
+  }
+  function restore(){
+    try{
+      const d=JSON.parse(localStorage.getItem(STORAGE));
+      if(!d||!['easy','medium','hard'].includes(d.difficulty)||!Number.isInteger(d.level)||d.level<1||d.level>999999)return false;
+      const validArray=(arr,min,max)=>Array.isArray(arr)&&arr.length===81&&arr.every(v=>Number.isInteger(v)&&v>=min&&v<=max);
+      if(!validArray(d.solution,1,9)||!validArray(d.puzzle,0,9)||!validArray(d.values,0,9)||!validArray(d.notes,0,511))return false;
+      if(!d.solution.every((v,i)=>!d.puzzle[i]||d.puzzle[i]===v))return false;
+      Object.assign(state,{level:d.level,difficulty:d.difficulty,solution:d.solution,puzzle:d.puzzle,values:d.values,notes:d.notes,mistakes:Math.max(0,Math.min(3,d.mistakes|0)),hintsUsed:Math.max(0,Math.min(3,d.hintsUsed|0)),seconds:Math.max(0,Math.min(359999,d.seconds|0)),status:d.status==='playing'?'playing':d.status==='won'?'won':'lost',history:[],noteMode:false});
+      state.selected=state.values.findIndex((v,i)=>!state.puzzle[i]&&!v);
+      if(state.selected<0)state.selected=40;
+      return true;
+    }catch(e){return false}
+  }
+  function setGameplay(running){
+    if(!sdk?.features?.GameplayAPI)return;
+    if(gameplayRunning===running)return;
+    gameplayRunning=running;
+    try{if(running)sdk.features.GameplayAPI.start();else sdk.features.GameplayAPI.stop()}catch(e){console.warn('Gameplay API:',e)}
+  }
+  function refreshGameplay(){setGameplay(state.status==='playing'&&!modalType&&!document.hidden&&!adOpen&&!platformPaused)}
+  // Yandex Games platform pause/resume: when the platform sends game_api_pause it
+  // marks the gameplay stopped itself; the game freezes the timer. On game_api_resume
+  // the timer resumes only when the game is actually playable (still playing, no modal,
+  // no ad, page visible) — an already-stopped game (menu/result window) stays stopped.
+  const onPlatformPause=()=>{platformPaused=true;refreshGameplay()};
+  const onPlatformResume=()=>{platformPaused=false;refreshGameplay()};
+  function newPuzzle({advance=false,difficulty=state.difficulty}={}){
+    if(advance)state.level++;
+    const generated=createPuzzle(difficulty);
+    Object.assign(state,{difficulty,solution:generated.solution,puzzle:generated.puzzle,values:generated.puzzle.slice(),notes:Array(81).fill(0),mistakes:0,hintsUsed:0,seconds:0,history:[],status:'playing',noteMode:false});
+    state.selected=state.values.findIndex(v=>v===0);
+    hideModal();renderAll(true);save();refreshGameplay();
+  }
+  function localize(){
+    document.documentElement.lang=language;
+    document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+    document.querySelectorAll('[data-i18n-html]').forEach(el=>el.innerHTML=t(el.dataset.i18nHtml));
+    document.querySelectorAll('[data-lang]').forEach(el=>el.classList.toggle('active',el.dataset.lang===language));
+    $('newGame').title=$('newGame').ariaLabel=t('newGame');boardEl.ariaLabel=t('board');keypadEl.ariaLabel=t('numbers');$('difficulties').ariaLabel=t('difficulty');
+    renderAll();if(modalType)renderModal(modalType);
+  }
+  function buildBoard(){
+    const fragment=document.createDocumentFragment();
+    for(let i=0;i<81;i++){const cell=document.createElement('button');cell.type='button';cell.className='cell';cell.dataset.index=i;cell.setAttribute('role','gridcell');cell.style.setProperty('--order',i);cell.addEventListener('click',()=>{if(state.status!=='playing'||modalType)return;state.selected=i;renderBoard();renderKeypad()});fragment.appendChild(cell)}
+    boardEl.appendChild(fragment);
+    for(let n=1;n<=9;n++){const key=document.createElement('button');key.className='key';key.type='button';key.dataset.number=n;key.addEventListener('click',()=>enter(n));keypadEl.appendChild(key)}
+  }
+  function renderBoard(fresh=false){
+    if(fresh){boardEl.classList.remove('fresh');void boardEl.offsetWidth;boardEl.classList.add('fresh');setTimeout(()=>boardEl.classList.remove('fresh'),650)}
+    const selected=state.selected,chosen=selected>=0?state.values[selected]:0;
+    for(let i=0;i<81;i++){
+      const cell=boardEl.children[i],value=state.values[i];
+      cell.className='cell';
+      if(state.puzzle[i])cell.classList.add('given');
+      if(selected>=0&&i!==selected&&peers(i,selected))cell.classList.add('peer');
+      if(chosen&&value===chosen&&i!==selected)cell.classList.add('same');
+      if(value&&value!==state.solution[i]&&!state.puzzle[i])cell.classList.add('wrong');
+      if(i===selected)cell.classList.add('selected');
+      if(i===highlightedHint)cell.classList.add('hinted');
+      const label=t('cell').replace('{r}',Math.floor(i/9)+1).replace('{c}',i%9+1);
+      cell.setAttribute('aria-label',`${label}: ${value||t('empty')}${state.puzzle[i]?', '+t('fixed'):''}${value&&value!==state.solution[i]?', '+t('wrong'):''}`);
+      cell.setAttribute('aria-selected',String(i===selected));
+      if(value){cell.textContent=value}else if(state.notes[i]){
+        const notes=document.createElement('span');notes.className='notes-grid';
+        for(let n=1;n<=9;n++){const item=document.createElement('span');item.textContent=(state.notes[i]&(1<<(n-1)))?n:'';notes.appendChild(item)}
+        cell.replaceChildren(notes);
+      }else cell.textContent='';
+    }
+  }
+  function renderKeypad(){
+    for(let n=1;n<=9;n++){const key=keypadEl.children[n-1],placed=state.values.filter((v,i)=>v===n&&state.solution[i]===n).length;key.innerHTML=`${n}<small>${9-placed}</small>`;key.disabled=placed>=9||state.status!=='playing';key.classList.toggle('active',state.selected>=0&&state.values[state.selected]===n)}
+  }
+  function renderStats(){
+    const time=formatTime(state.seconds),mistakes=`${state.mistakes} / 3`,filled=state.values.reduce((total,v,i)=>total+(v===state.solution[i]?1:0),0),progress=Math.round(filled/81*100);
+    $('timeValue').textContent=$('mobileTime').textContent=time;
+    $('mistakeValue').textContent=$('mobileMistakes').textContent=mistakes;
+    $('progressValue').textContent=$('mobileProgress').textContent=progress+'%';$('progressFill').style.width=progress+'%';
+    $('levelTitle').textContent=`${t('level')} ${fmt(state.level)}`;
+    $('hintCount').textContent=`${3-state.hintsUsed} / 3`;$('hintButton').disabled=state.hintsUsed>=3||state.status!=='playing';
+    $('noteState').textContent=state.noteMode?t('on'):t('off');$('noteButton').classList.toggle('on',state.noteMode);
+    $('noteButton').disabled=$('eraseButton').disabled=state.status!=='playing';$('undoButton').disabled=state.status!=='playing'||!state.history.length;
+    document.querySelectorAll('[data-difficulty]').forEach(btn=>btn.classList.toggle('active',btn.dataset.difficulty===state.difficulty));
+  }
+  function renderAll(fresh=false){renderBoard(fresh);renderKeypad();renderStats()}
+  function snapshot(){state.history.push({values:state.values.slice(),notes:state.notes.slice()});if(state.history.length>100)state.history.shift()}
+  function removePeerNotes(index,num){for(let i=0;i<81;i++)if(peers(index,i))state.notes[i]&=~(1<<(num-1))}
+  function enter(num){
+    if(state.status!=='playing'||modalType)return;
+    const i=state.selected;if(i<0){toast(t('selectCell'));return}if(state.puzzle[i]){toast(t('fixedCell'));return}
+    if(state.noteMode){if(state.values[i])return;snapshot();state.notes[i]^=1<<(num-1)}
+    else{
+      if(state.values[i]===num)return;
+      snapshot();state.values[i]=num;state.notes[i]=0;
+      if(num===state.solution[i])removePeerNotes(i,num);
+      else state.mistakes++;
+    }
+    renderAll();save();
+    if(state.mistakes>=3){finish('lost');return}
+    if(state.values.every((v,index)=>v===state.solution[index]))finish('won');
+  }
+  function erase(){const i=state.selected;if(state.status!=='playing'||modalType)return;if(i<0){toast(t('selectCell'));return}if(state.puzzle[i]){toast(t('fixedCell'));return}if(!state.values[i]&&!state.notes[i])return;snapshot();state.values[i]=0;state.notes[i]=0;renderAll();save()}
+  function undo(){if(state.status!=='playing'||modalType)return;const prev=state.history.pop();if(!prev){toast(t('noMoves'));return}state.values=prev.values;state.notes=prev.notes;renderAll();save()}
+  function hint(){
+    if(state.status!=='playing'||modalType)return;
+    if(state.hintsUsed>=3){toast(t('noHints'));return}
+    let i=state.selected;
+    if(i<0||state.puzzle[i]||state.values[i]===state.solution[i])i=state.values.findIndex((v,k)=>v!==state.solution[k]);
+    if(i<0)return;
+    snapshot();state.selected=i;state.values[i]=state.solution[i];state.notes[i]=0;removePeerNotes(i,state.solution[i]);state.hintsUsed++;
+    highlightedHint=i;renderAll();setTimeout(()=>{highlightedHint=-1;renderBoard()},700);save();
+    if(state.values.every((v,index)=>v===state.solution[index]))finish('won');
+  }
+  function toast(text){const el=$('toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2100)}
+  function showModal(type){modalType=type;renderModal(type);modalLayer.classList.add('open');refreshGameplay();$('modalPrimary').focus()}
+  function hideModal(){modalType=null;modalLayer.classList.remove('open');$('confettiLayer').replaceChildren()}
+  function renderModal(type){
+    const win=type==='won',lose=type==='lost';
+    $('modalKicker').textContent=t(win?'winKicker':lose?'loseKicker':'confirmKicker');
+    $('modalTitle').textContent=t(win?'winTitle':lose?'loseTitle':'confirmTitle');
+    $('modalText').textContent=t(win?'winText':lose?'loseText':'confirmText');
+    $('modalArt').textContent=win?'✳':lose?'↺':'✦';
+    $('modalTime').textContent=formatTime(state.seconds);$('modalMistakes').textContent=state.mistakes;
+    $('modalPrimary').textContent=t(win?'nextLevel':lose?'tryAgain':'startNew');
+    $('modalSecondary').textContent=t(win?'playAgain':lose?'newPuzzle':'keepPlaying');
+    document.querySelector('.modal-summary').style.display=type==='confirm'?'none':'flex';
+    const layer=$('confettiLayer');layer.replaceChildren();
+    if(win){for(let n=0;n<24;n++){const piece=document.createElement('i');piece.className='confetti';piece.style.left=Math.random()*100+'%';piece.style.background=['#e99775','#67b49c','#eac688','#a9c4dd'][n%4];piece.style.animationDelay=Math.random()*2.4+'s';piece.style.animationDuration=2.5+Math.random()*2+'s';layer.appendChild(piece)}}
+  }
+  function finish(status){
+    state.status=status;setGameplay(false);save();renderAll();
+    // Interstitial is requested right after the board is verified as fully solved,
+    // so it is shown before the result window appears. No ad during gameplay.
+    if(status==='won'){showInterstitial(()=>showModal('won'));return}
+    showModal(status);
+  }
+  // Interstitial: shown once, when the puzzle is confirmed solved; no ad on the "next level" tap.
+  function showInterstitial(onDone){
+    if(!sdk?.adv?.showFullscreenAdv){onDone();return}
+    let completed=false;
+    function continueGame(){if(completed)return;completed=true;adOpen=false;onDone()}
+    try{sdk.adv.showFullscreenAdv({callbacks:{
+      onOpen:()=>{adOpen=true;refreshGameplay()},
+      onClose:()=>continueGame(),
+      onError:error=>{console.warn('Ad unavailable:',error);continueGame()}
+    }})}catch(e){console.warn('Ad unavailable:',e);continueGame()}
+  }
+  function proceedAfterWin(advance){
+    if(transitioning)return;
+    transitioning=true;
+    newPuzzle({advance});
+    $('modalPrimary').disabled=$('modalSecondary').disabled=false;
+    transitioning=false;
+  }
+  function bindEvents(){
+    document.querySelectorAll('[data-lang]').forEach(btn=>btn.addEventListener('click',()=>{language=btn.dataset.lang;localize()}));
+    document.querySelectorAll('[data-difficulty]').forEach(btn=>btn.addEventListener('click',()=>{if(btn.dataset.difficulty!==state.difficulty)newPuzzle({difficulty:btn.dataset.difficulty})}));
+    $('newGame').addEventListener('click',()=>{if(state.status==='playing')showModal('confirm');else newPuzzle()});
+    $('noteButton').addEventListener('click',()=>{state.noteMode=!state.noteMode;renderStats();toast(t(state.noteMode?'noteToast':'noteOffToast'))});
+    $('hintButton').addEventListener('click',hint);$('eraseButton').addEventListener('click',erase);$('undoButton').addEventListener('click',undo);
+    $('modalPrimary').addEventListener('click',()=>{if(modalType==='won')proceedAfterWin(true);else newPuzzle()});
+    $('modalSecondary').addEventListener('click',()=>{if(modalType==='won')proceedAfterWin(false);else if(modalType==='confirm'){hideModal();refreshGameplay()}else newPuzzle()});
+    document.addEventListener('keydown',e=>{
+      if(modalType){if(e.key==='Escape'&&modalType==='confirm'){hideModal();refreshGameplay()}return}
+      if(e.ctrlKey||e.metaKey){if(e.key.toLowerCase()==='z'){e.preventDefault();undo()}return}
+      if(e.altKey||e.target instanceof HTMLInputElement)return;
+      if(/^[1-9]$/.test(e.key)){e.preventDefault();enter(Number(e.key))}
+      else if(e.key==='Backspace'||e.key==='Delete'||e.key==='0'){e.preventDefault();erase()}
+      else if(e.key.toLowerCase()==='n'){state.noteMode=!state.noteMode;renderStats()}
+      else if(e.key.toLowerCase()==='h')hint();
+      else if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+        e.preventDefault();if(state.status!=='playing')return;
+        const step={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1}[e.key];
+        let next=state.selected<0?0:state.selected+step;
+        if(e.key==='ArrowLeft'&&state.selected%9===0)next=state.selected;
+        if(e.key==='ArrowRight'&&state.selected%9===8)next=state.selected;
+        state.selected=Math.min(80,Math.max(0,next));renderBoard();renderKeypad();boardEl.children[state.selected].focus({preventScroll:true});
+      }
+    });
+    document.addEventListener('visibilitychange',refreshGameplay);
+    window.addEventListener('blur',refreshGameplay);
+    window.addEventListener('focus',refreshGameplay);
+  }
+  // Platform SDK: SDK locale -> language variable; Game Ready only after the playable board is rendered.
+  async function initYandex(){
+    if(typeof YaGames==='undefined')return;
+    try{
+      sdk=await YaGames.init();
+      // Platform pause/resume events: freeze the counter on game_api_pause,
+      // continue it on game_api_resume (the platform calls GameplayAPI.stop()/start() itself).
+      sdk.on?.('game_api_pause',onPlatformPause);
+      sdk.on?.('game_api_resume',onPlatformResume);
+      const sdkLanguage=sdk.environment?.i18n?.lang;
+      if(sdkLanguage)language=sdkLanguage.toLowerCase().startsWith('ru')?'ru':'en';
+      localize();
+      sdk.features?.LoadingAPI?.ready();
+      refreshGameplay();
+    }catch(error){console.warn('Yandex Games SDK unavailable:',error)}
+  }
+  function init(){
+    buildBoard();bindEvents();
+    if(!restore())newPuzzle();else{renderAll();if(state.status!=='playing')showModal(state.status)}
+    localize();refreshGameplay();initYandex();
+    setInterval(()=>{if(state.status==='playing'&&!modalType&&!document.hidden&&!adOpen&&!platformPaused){state.seconds++;const value=formatTime(state.seconds);$('timeValue').textContent=$('mobileTime').textContent=value;if(state.seconds%5===0)save()}},1000);
+  }
+  init();
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
