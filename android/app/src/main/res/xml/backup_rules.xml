@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nothing sensitive is stored: only the running puzzle and the language. -->
+<full-backup-content>
+    <include domain="sharedpref" path="littlelogic-sudoku.xml" />
+</full-backup-content>

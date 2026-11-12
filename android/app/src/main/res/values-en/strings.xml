@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sudoku</string>
+
+    <!-- Brand -->
+    <string name="brand_first">Little</string>
+    <string name="brand_second">Logic</string>
+    <string name="header_label">A moment for your mind</string>
+
+    <!-- Intro (wide screens) -->
+    <string name="hero_title_prefix">Find your </string>
+    <string name="hero_title_em">flow</string>
+    <string name="hero_title_suffix"> of thought.</string>
+    <string name="hero_copy">It all starts with one little square. Pause, focus, and let logic lead the way.</string>
+    <string name="intro_footer">A little pause. A lovely reward.</string>
+
+    <!-- Game header -->
+    <string name="your_journey">YOUR JOURNEY</string>
+    <string name="level_title">Level %1$s</string>
+    <string name="difficulty">Difficulty</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
+    <string name="new_game">New game</string>
+    <string name="board_label">9 by 9 sudoku</string>
+    <string name="cell_description">Row %1$d, column %2$d: %3$s</string>
+    <string name="empty_cell">empty</string>
+
+    <!-- Stats -->
+    <string name="at_glance">AT A GLANCE</string>
+    <string name="time">Time</string>
+    <string name="mistakes">Mistakes</string>
+    <string name="progress">Progress</string>
+    <string name="mistakes_value">%1$d / 3</string>
+    <string name="hints_value">%1$d / 3</string>
+    <string name="progress_value">%1$d%%</string>
+
+    <!-- Tools -->
+    <string name="little_helpers">LITTLE HELPERS</string>
+    <string name="notes">Notes</string>
+    <string name="hint">Hint</string>
+    <string name="erase">Erase</string>
+    <string name="undo">Undo</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+
+    <!-- Tip / footer -->
+    <string name="tip_title">A LITTLE TIP</string>
+    <string name="tip_body">Each row, column, and 3×3 box needs the numbers 1 through 9.</string>
+    <string name="footer">Made for calm and curious minds ✳</string>
+
+    <!-- Toasts -->
+    <string name="note_on_toast">Notes mode on</string>
+    <string name="note_off_toast">Notes mode off</string>
+    <string name="select_cell">Select a cell first</string>
+    <string name="fixed_cell">This number cannot be changed</string>
+    <string name="no_hints">No hints left</string>
+    <string name="no_moves">Nothing to undo</string>
+
+    <!-- Result dialogs -->
+    <string name="win_kicker">PUZZLE COMPLETE</string>
+    <string name="win_title">Beautifully done!</string>
+    <string name="win_text">One more little victory. Take a breath — you have earned it.</string>
+    <string name="next_level">Next level</string>
+    <string name="play_another">Play another</string>
+    <string name="lose_kicker">NO WORRIES</string>
+    <string name="lose_title">Try again?</string>
+    <string name="lose_text">Mistakes are part of the journey. A fresh start is waiting for you.</string>
+    <string name="try_again">Try again</string>
+    <string name="new_puzzle">New puzzle</string>
+    <string name="confirm_kicker">NEW GAME</string>
+    <string name="confirm_title">Start over?</string>
+    <string name="confirm_text">Your progress on this puzzle will be lost.</string>
+    <string name="start_new">Start a new game</string>
+    <string name="keep_playing">Keep playing</string>
+
+    <!-- Language switch -->
+    <string name="language_ru">Русский</string>
+    <string name="language_en">English</string>
+    <string name="language_switch">Language</string>
+</resources>

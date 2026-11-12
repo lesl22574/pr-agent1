@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Судоку</string>
+
+    <!-- Brand -->
+    <string name="brand_first">Little</string>
+    <string name="brand_second">Logic</string>
+    <string name="header_label">Отдых для себя</string>
+
+    <!-- Intro (wide screens) -->
+    <string name="hero_title_prefix">Найди свой </string>
+    <string name="hero_title_em">ритм</string>
+    <string name="hero_title_suffix"> мысли.</string>
+    <string name="hero_copy">Всё начинается с одной клетки. Остановись, сосредоточься и позволь логике вести тебя дальше.</string>
+    <string name="intro_footer">Небольшая пауза. Большое удовольствие.</string>
+
+    <!-- Game header -->
+    <string name="your_journey">ТВОЁ ПУТЕШЕСТВИЕ</string>
+    <string name="level_title">Уровень %1$s</string>
+    <string name="difficulty">Сложность</string>
+    <string name="easy">Легко</string>
+    <string name="medium">Средне</string>
+    <string name="hard">Сложно</string>
+    <string name="new_game">Новая игра</string>
+    <string name="board_label">Судоку 9 на 9</string>
+    <string name="cell_description">Строка %1$d, столбец %2$d: %3$s</string>
+    <string name="empty_cell">пусто</string>
+
+    <!-- Stats -->
+    <string name="at_glance">ТВОЙ ПРОГРЕСС</string>
+    <string name="time">Время</string>
+    <string name="mistakes">Ошибки</string>
+    <string name="progress">Прогресс</string>
+    <string name="mistakes_value">%1$d / 3</string>
+    <string name="hints_value">%1$d / 3</string>
+    <string name="progress_value">%1$d%%</string>
+
+    <!-- Tools -->
+    <string name="little_helpers">ПОМОЩНИКИ</string>
+    <string name="notes">Заметки</string>
+    <string name="hint">Подсказка</string>
+    <string name="erase">Стереть</string>
+    <string name="undo">Отменить</string>
+    <string name="on">Вкл.</string>
+    <string name="off">Выкл.</string>
+
+    <!-- Tip / footer -->
+    <string name="tip_title">МАЛЕНЬКИЙ СОВЕТ</string>
+    <string name="tip_body">Каждая строка, столбец и квадрат 3×3 должны содержать цифры от 1 до 9.</string>
+    <string name="footer">Сделано для спокойных и любопытных умов ✳</string>
+
+    <!-- Toasts -->
+    <string name="note_on_toast">Режим заметок включён</string>
+    <string name="note_off_toast">Режим заметок выключен</string>
+    <string name="select_cell">Сначала выбери клетку</string>
+    <string name="fixed_cell">Эту цифру нельзя изменить</string>
+    <string name="no_hints">Подсказки закончились</string>
+    <string name="no_moves">Нечего отменять</string>
+
+    <!-- Result dialogs -->
+    <string name="win_kicker">ГОЛОВОЛОМКА РЕШЕНА</string>
+    <string name="win_title">Блестящая работа!</string>
+    <string name="win_text">Ещё одна маленькая победа. Сделай вдох — ты это заслужил.</string>
+    <string name="next_level">Следующий уровень</string>
+    <string name="play_another">Ещё одну игру</string>
+    <string name="lose_kicker">НИЧЕГО СТРАШНОГО</string>
+    <string name="lose_title">Попробуем снова?</string>
+    <string name="lose_text">Ошибки — тоже часть пути. Новая попытка уже ждёт тебя.</string>
+    <string name="try_again">Попробовать снова</string>
+    <string name="new_puzzle">Новая головоломка</string>
+    <string name="confirm_kicker">НОВАЯ ИГРА</string>
+    <string name="confirm_title">Начать заново?</string>
+    <string name="confirm_text">Текущий прогресс в этой головоломке будет потерян.</string>
+    <string name="start_new">Начать новую</string>
+    <string name="keep_playing">Продолжить игру</string>
+
+    <!-- Language switch -->
+    <string name="language_ru">Русский</string>
+    <string name="language_en">English</string>
+    <string name="language_switch">Язык</string>
+</resources>
