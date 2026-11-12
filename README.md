@@ -19,5 +19,17 @@ The app targets Android 7.0 (API 24) and newer. The project uses Android Gradle 
 - Timer, progress, level progression, and a friendly completion screen.
 - Automatic local save and restore of the current puzzle.
 - Responsive Compose layout that adapts to phone screen sizes.
+- Yandex Mobile Ads SDK: sticky banner at the bottom and a preloaded interstitial between completed levels.
 
-The Android implementation is fully native: it does not embed a WebView or need a network connection while playing. Platform-specific web integrations from the browser version are not included.
+The Android implementation is fully native and does not embed a WebView. Sudoku remains playable offline; ad requests require an internet connection.
+
+## Yandex ads
+
+The app currently uses Yandex demo placements for testing: `demo-banner-yandex` and `demo-interstitial-yandex`. Before publishing, replace them with placement IDs from your Yandex Advertising Network account. Set these Gradle properties in your local `~/.gradle/gradle.properties` (or pass them with `-P`):
+
+```properties
+YANDEX_BANNER_AD_UNIT_ID=your-banner-placement-id
+YANDEX_INTERSTITIAL_AD_UNIT_ID=your-interstitial-placement-id
+```
+
+The interstitial is shown only after a puzzle is solved and the player selects **Next level**. If no interstitial is ready, the next level opens immediately.

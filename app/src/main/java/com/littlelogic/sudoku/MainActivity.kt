@@ -1,5 +1,8 @@
 package com.littlelogic.sudoku
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -210,11 +214,14 @@ private object SudokuEngine {
 @Composable
 private fun SudokuApp() {
     val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    val interstitialController = remember(activity) { activity?.let { YandexInterstitialController(it) } }
     val preferences = remember { context.getSharedPreferences("littlelogic-sudoku", 0) }
     var language by remember { mutableStateOf(preferences.getString("language", "ru") ?: "ru") }
     var game by remember { mutableStateOf(loadGame(preferences) ?: createGame(1, "easy")) }
     var dialog by remember { mutableStateOf(game.status.takeIf { it == "won" || it == "lost" }) }
     var hintCell by remember { mutableStateOf(-1) }
+    var advancingLevel by remember { mutableStateOf(false) }
     val history = remember { ArrayDeque<BoardSnapshot>() }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -229,6 +236,10 @@ private fun SudokuApp() {
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    DisposableEffect(interstitialController) {
+        interstitialController?.preload()
+        onDispose { interstitialController?.destroy() }
     }
 
     LaunchedEffect(game.status, dialog, isForeground) {
@@ -256,6 +267,19 @@ private fun SudokuApp() {
         val nextLevel = if (advance) (game.level + 1).coerceAtMost(999_999) else game.level
         game = createGame(nextLevel, difficulty)
         dialog = null
+    }
+    fun proceedToNextLevel() {
+        if (advancingLevel) return
+        advancingLevel = true
+        val continueToNextLevel = {
+            startNew(advance = true)
+            advancingLevel = false
+        }
+        if (interstitialController != null) {
+            interstitialController.showBetweenLevels(continueToNextLevel)
+        } else {
+            continueToNextLevel()
+        }
     }
     fun snapshot() {
         history.addLast(BoardSnapshot(game.values.copyOf(), game.notes.copyOf()))
@@ -345,6 +369,11 @@ private fun SudokuApp() {
         Scaffold(
             containerColor = Paper,
             snackbarHost = { SnackbarHost(snackbar) },
+            bottomBar = {
+                Surface(color = Color.White) {
+                    YandexBanner(Modifier.navigationBarsPadding())
+                }
+            },
         ) { padding ->
             Column(
                 modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
@@ -432,7 +461,7 @@ private fun SudokuApp() {
             onDismissRequest = { },
             title = { Text(if (russian) "Блестящая работа! ✨" else "Beautifully done! ✨", fontFamily = FontFamily.Serif) },
             text = { Text(if (russian) "Головоломка решена за ${formatTime(game.seconds)}. Отличный повод для маленькой паузы." else "Puzzle complete in ${formatTime(game.seconds)}. A lovely little win.") },
-            confirmButton = { TextButton(onClick = { startNew(advance = true) }) { Text(if (russian) "Следующий уровень" else "Next level", color = Teal) } },
+            confirmButton = { TextButton(enabled = !advancingLevel, onClick = { proceedToNextLevel() }) { Text(if (russian) "Следующий уровень" else "Next level", color = Teal) } },
             dismissButton = { TextButton(onClick = { startNew() }) { Text(if (russian) "Ещё одну" else "Play again", color = Muted) } },
             containerColor = Color.White,
         )
@@ -634,6 +663,12 @@ private fun ToolButton(symbol: String, label: String, selected: Boolean, enabled
         Text(symbol, color = if (enabled) Teal else Muted.copy(alpha = 0.45f), fontSize = 17.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
         Text(label, color = if (enabled) Color(0xFF53736F) else Muted.copy(alpha = 0.55f), fontSize = 9.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 1)
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 private fun createGame(level: Int, difficulty: String): GameState {

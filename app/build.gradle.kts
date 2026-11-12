@@ -14,10 +14,15 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        val bannerAdUnitId = providers.gradleProperty("YANDEX_BANNER_AD_UNIT_ID").orElse("demo-banner-yandex").get()
+        val interstitialAdUnitId = providers.gradleProperty("YANDEX_INTERSTITIAL_AD_UNIT_ID").orElse("demo-interstitial-yandex").get()
+        buildConfigField("String", "YANDEX_BANNER_AD_UNIT_ID", "\"$bannerAdUnitId\"")
+        buildConfigField("String", "YANDEX_INTERSTITIAL_AD_UNIT_ID", "\"$interstitialAdUnitId\"")
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
@@ -40,6 +45,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation("com.yandex.android:mobileads:8.6.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
