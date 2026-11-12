@@ -48,17 +48,25 @@ jobs:
       - name: Diagnostics on failure
         if: failure()
         run: |
-          python3 - <<'PY'
+          python3 - <<'PYDIAG'
           import os, urllib.parse
           text = ""
           for path in ("/tmp/test.log", "/tmp/assemble.log"):
               if os.path.exists(path):
                   text += open(path, encoding="utf-8", errors="replace").read()
-          if not text:
-              text = "no gradle log was produced"
-          tail = text[-7000:]
-          print("::error title=build-log::" + urllib.parse.quote(tail, safe="/.,:=_-()[]{}<>'\" "))
-          PY
+          lines = text.splitlines()
+          keep = []
+          for line in lines:
+              if line.startswith("e: ") or line.startswith("e:") or "error:" in line.lower():
+                  keep.append(line)
+          if "What went wrong" in text:
+              start = text.index("What went wrong")
+              end = text.find("Try:", start)
+              section = text[start:end if end != -1 else start + 3000]
+              keep.append(section)
+          message = "\n".join(keep) if keep else text[-3000:]
+          print("::error title=build-errors::" + urllib.parse.quote(message[:7000], safe="/.,:=_-()[]{}<>'\" "))
+          PYDIAG
 
       - name: Upload debug APK
         if: success()
