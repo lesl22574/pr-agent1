@@ -35,7 +35,7 @@ class SudokuGeneratorTest {
 
     @Test
     fun `every generated puzzle has one solution`() {
-        for (difficulty in Difficulty.entries) {
+        for (difficulty in Difficulty.values()) {
             repeat(3) { seed ->
                 val puzzle = createPuzzle(difficulty, Random(seed * 31 + difficulty.ordinal))
                 assertEquals(81, puzzle.solution.size)

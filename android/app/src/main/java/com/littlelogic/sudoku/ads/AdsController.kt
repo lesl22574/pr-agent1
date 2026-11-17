@@ -2,97 +2,104 @@ package com.littlelogic.sudoku.ads
 
 import android.app.Activity
 import android.util.Log
-import com.yandex.mobile.ads.common.AdError
 import com.yandex.mobile.ads.common.AdRequest
 import com.yandex.mobile.ads.common.AdRequestError
 import com.yandex.mobile.ads.common.ImpressionData
 import com.yandex.mobile.ads.interstitial.InterstitialAd
 import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener
-import com.yandex.mobile.ads.interstitial.InterstitialAdLoadListener
-import com.yandex.mobile.ads.interstitial.InterstitialAdLoader
 
 private const val TAG = "YandexAds"
 
 /**
- * Owns the interstitial ad for the whole activity:
- *  - one loader instance, reused for every preload (SDK recommendation);
- *  - shown exactly once at the pause between a solved level and the next one;
- *  - never shown during gameplay, on a new game, or after a loss;
- *  - a missing or failed ad simply continues the game.
+ * Owns the interstitial ad of the screen (Yandex Mobile Ads SDK 5.x API):
+ *  - preloads one ad after SDK initialization;
+ *  - shows it exactly once at the pause between a solved level and the next one;
+ *  - never shows it during gameplay, on a new game, or after a loss;
+ *  - continues the game when an ad is unavailable.
  */
 class AdsController(private val activity: Activity) {
-    private var loader: InterstitialAdLoader? = InterstitialAdLoader(activity)
     private var interstitialAd: InterstitialAd? = null
+    private var isReady = false
     private var isShowing = false
+    private var released = false
+    private var pendingFinish: (() -> Unit)? = null
 
     fun preload() {
-        if (isShowing || interstitialAd != null || loader == null) return
-        loader?.loadAd(
-            AdRequest.Builder(AdsConfig.INTERSTITIAL_AD_UNIT_ID).build(),
-            object : InterstitialAdLoadListener {
-                override fun onAdLoaded(ad: InterstitialAd) {
+        if (released || isReady || isShowing || interstitialAd != null) return
+        val ad = InterstitialAd(activity)
+        ad.setAdUnitId(AdsConfig.INTERSTITIAL_AD_UNIT_ID)
+        ad.setInterstitialAdEventListener(object : InterstitialAdEventListener {
+            override fun onAdLoaded() {
+                if (interstitialAd === ad) {
+                    isReady = true
                     Log.d(TAG, "interstitial loaded")
-                    interstitialAd = ad
                 }
+            }
 
-                override fun onAdFailedToLoad(error: AdRequestError) {
-                    // Deliberate pause before the next attempt: no retry from this callback.
-                    Log.d(TAG, "interstitial unavailable: ${error.code} ${error.description}")
+            override fun onAdFailedToLoad(error: AdRequestError) {
+                Log.d(TAG, "interstitial unavailable: ${error.description}")
+                // Deliberate pause before the next attempt: no retry from this callback.
+                if (interstitialAd === ad) {
+                    interstitialAd = null
+                    isReady = false
+                    ad.destroy()
                 }
-            },
-        )
-    }
+            }
 
-    /** Shows the ad at a level transition and always calls [onFinished] once. */
-    fun showBetweenLevels(onFinished: () -> Unit) {
-        val ad = interstitialAd
-        if (ad == null) {
-            onFinished()
-            preload()
-            return
-        }
-
-        var finished = false
-        fun finish() {
-            if (finished) return
-            finished = true
-            isShowing = false
-            ad.setAdEventListener(null)
-            interstitialAd = null
-            onFinished()
-            preload()
-        }
-
-        ad.setAdEventListener(object : InterstitialAdEventListener {
             override fun onAdShown() {
                 isShowing = true
             }
 
             override fun onAdDismissed() {
-                finish()
-            }
-
-            override fun onAdFailedToShow(error: AdError) {
-                Log.d(TAG, "interstitial not shown: ${error.description}")
-                finish()
+                finishShowing()
             }
 
             override fun onAdClicked() = Unit
 
             override fun onImpression(data: ImpressionData?) = Unit
-        })
 
-        runCatching { ad.show(activity) }
+            override fun onLeftApplication() = Unit
+
+            override fun onReturnedToApplication() = Unit
+        })
+        interstitialAd = ad
+        ad.loadAd(AdRequest.Builder().build())
+    }
+
+    /** Shows the ad at a level transition and always calls [onFinished] once. */
+    fun showBetweenLevels(onFinished: () -> Unit) {
+        val ad = interstitialAd
+        if (ad == null || !isReady) {
+            onFinished()
+            preload()
+            return
+        }
+        pendingFinish = onFinished
+        runCatching { ad.show() }
             .onFailure { throwable ->
                 Log.d(TAG, "interstitial show skipped", throwable)
-                finish()
+                finishShowing()
             }
     }
 
+    private fun finishShowing() {
+        val callback = pendingFinish
+        pendingFinish = null
+        isShowing = false
+        isReady = false
+        val ad = interstitialAd
+        interstitialAd = null
+        runCatching { ad?.destroy() }
+        callback?.invoke()
+        preload()
+    }
+
     fun release() {
-        loader?.cancelLoading()
-        loader = null
-        interstitialAd?.setAdEventListener(null)
+        released = true
+        pendingFinish = null
+        isShowing = false
+        isReady = false
+        runCatching { interstitialAd?.destroy() }
         interstitialAd = null
     }
 }

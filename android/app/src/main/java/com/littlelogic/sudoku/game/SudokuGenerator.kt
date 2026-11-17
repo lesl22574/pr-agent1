@@ -65,7 +65,7 @@ fun countSolutions(grid: IntArray, limit: Int = 2): Int {
             val column = index % 9
             val box = boxOf(row, column)
             val mask = FULL_MASK and (rows[row] or columns[column] or boxes[box]).inv()
-            val candidates = mask.countOneBits()
+            val candidates = Integer.bitCount(mask)
             if (candidates == 0) return
             if (candidates < bestLength) {
                 best = index
@@ -86,7 +86,7 @@ fun countSolutions(grid: IntArray, limit: Int = 2): Int {
         var mask = bestMask
         while (mask != 0 && count < limit) {
             val bit = mask and -mask
-            val digit = bit.countTrailingZeroBits()
+            val digit = Integer.numberOfTrailingZeros(bit)
             grid[best] = digit
             rows[row] = rows[row] or bit
             columns[column] = columns[column] or bit

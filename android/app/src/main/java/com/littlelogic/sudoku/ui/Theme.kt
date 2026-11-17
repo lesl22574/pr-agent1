@@ -1,7 +1,7 @@
 package com.littlelogic.sudoku.ui
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -27,23 +27,23 @@ val WrongInk = Color(0xFFD56F56)
 val NoteInk = Color(0xFF73938B)
 val ProgressTrack = Color(0xFFEAF1E9)
 
-private val LightColors = lightColorScheme(
+private val LightColors = lightColors(
     primary = Teal,
+    primaryVariant = TealDark,
     onPrimary = Color.White,
     secondary = Coral,
     background = Paper,
     onBackground = Ink,
     surface = Color.White,
     onSurface = Ink,
-    surfaceVariant = KeyBackground,
-    onSurfaceVariant = Muted,
-    outline = Line,
+    error = WrongInk,
+    onError = Color.White,
 )
 
 @Composable
 fun LittleLogicTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = LightColors,
+        colors = LightColors,
         content = content,
     )
 }

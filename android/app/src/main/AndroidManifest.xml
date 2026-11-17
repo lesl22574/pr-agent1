@@ -13,11 +13,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LittleLogicSudoku">
 
-        <!-- The SDK is initialized manually in LittleLogicApp.onCreate(). -->
-        <meta-data
-            android:name="com.yandex.mobile.ads.AUTOMATIC_SDK_INITIALIZATION"
-            android:value="false" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true">

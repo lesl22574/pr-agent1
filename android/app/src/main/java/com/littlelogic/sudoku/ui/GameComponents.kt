@@ -19,11 +19,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,7 +122,7 @@ private fun LanguageSwitch(language: Language, onLanguageChange: (Language) -> U
             .background(Color(0xFFEBECE6))
             .padding(4.dp),
     ) {
-        Language.entries.forEach { item ->
+        Language.values().forEach { item ->
             val active = item == language
             Box(
                 modifier = Modifier
@@ -188,7 +188,7 @@ fun DifficultySelector(state: GameState, strings: Strings, onSelect: (Difficulty
             .semantics { contentDescription = strings.difficulty },
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Difficulty.entries.forEach { difficulty ->
+        Difficulty.values().forEach { difficulty ->
             val active = difficulty == state.difficulty
             val label = when (difficulty) {
                 Difficulty.EASY -> strings.easy
@@ -616,7 +616,7 @@ fun ResultDialog(
                     onClick = onPrimary,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Teal),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Teal),
                 ) {
                     Text(
                         text = if (won) strings.nextLevel else strings.tryAgain,
@@ -682,7 +682,7 @@ fun ConfirmDialog(strings: Strings, onConfirm: () -> Unit, onDismiss: () -> Unit
                     onClick = onConfirm,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Teal),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Teal),
                 ) {
                     Text(text = strings.startNew, fontWeight = FontWeight.Bold, color = Color.White)
                 }

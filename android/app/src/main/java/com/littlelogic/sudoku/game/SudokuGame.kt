@@ -1,5 +1,6 @@
 package com.littlelogic.sudoku.game
 
+import java.util.ArrayDeque
 import kotlin.random.Random
 
 private const val MAX_HISTORY = 100
@@ -105,7 +106,7 @@ class SudokuGame(private val random: Random = Random.Default) {
 
     fun undo(state: GameState): GameResult {
         if (!isEditable(state)) return GameResult(state)
-        val previous = history.removeLastOrNull() ?: return GameResult(state, MessageKey.NO_MOVES)
+        val previous = history.pollLast() ?: return GameResult(state, MessageKey.NO_MOVES)
         return GameResult(
             state.copy(
                 values = previous.values,

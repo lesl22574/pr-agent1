@@ -9,7 +9,7 @@ enum class Language(val id: String) {
     EN("en");
 
     companion object {
-        fun fromId(id: String?): Language = entries.firstOrNull { it.id == id } ?: RU
+        fun fromId(id: String?): Language = values().firstOrNull { it.id == id } ?: RU
 
         fun fromSystem(): Language =
             if (Locale.getDefault().language.equals("ru", ignoreCase = true)) RU else EN
@@ -23,7 +23,7 @@ enum class Difficulty(val id: String, val givens: Int) {
     HARD("hard", 29);
 
     companion object {
-        fun fromId(id: String?): Difficulty? = entries.firstOrNull { it.id == id }
+        fun fromId(id: String?): Difficulty? = values().firstOrNull { it.id == id }
     }
 }
 

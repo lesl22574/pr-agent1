@@ -8,7 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
 import com.littlelogic.sudoku.ads.AdsController
 import com.littlelogic.sudoku.ads.AdsSdk
 import com.littlelogic.sudoku.game.SudokuViewModel
@@ -18,9 +18,13 @@ import com.littlelogic.sudoku.ui.SudokuApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val viewModel = ViewModelProvider(
+            this,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(application),
+        ).get(SudokuViewModel::class.java)
+
         setContent {
             LittleLogicTheme {
-                val viewModel: SudokuViewModel = viewModel()
                 val adsController = remember { AdsController(this@MainActivity) }
                 val adsReady by AdsSdk.ready.collectAsState()
 

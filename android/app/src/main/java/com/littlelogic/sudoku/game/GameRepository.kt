@@ -81,7 +81,8 @@ class GameRepository(context: Context) {
         if (raw == null || raw.length != 81) return null
         val result = ArrayList<Int>(81)
         for (char in raw) {
-            val digit = char.digitToIntOrNull() ?: return null
+            if (char !in '0'..'9') return null
+            val digit = char - '0'
             if (digit !in min..max) return null
             result.add(digit)
         }
