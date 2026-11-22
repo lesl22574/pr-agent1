@@ -1,0 +1,231 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: #111; font-family: "Segoe UI", Arial, sans-serif; user-select: none;
+}
+
+.hidden { display: none !important; }
+
+/* Игровое поле фиксированного размера 1280x720, масштабируется под окно (JS) */
+#stage {
+  position: absolute; left: 50%; top: 50%;
+  width: 1280px; height: 720px;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+/* ---- Фон (placeholder: положите assets/img/bg.jpg) ---- */
+#bg {
+  position: absolute; inset: 0;
+  background:
+    url('../assets/img/bg.jpg') center / cover no-repeat,
+    linear-gradient(180deg, #9ddcf5 0%, #f5c6e6 45%, #b9ea8a 60%, #7fd36a 100%);
+}
+
+.screen { position: absolute; inset: 0; }
+.overlay {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(255, 238, 248, 0.82);
+  z-index: 10;
+}
+
+/* ---- Кнопки-иконки ---- */
+.round {
+  position: absolute; width: 66px; height: 66px;
+  border: 4px dashed #5fd34a; border-radius: 16px;
+  background: #fff; color: #3aa02a; font-size: 36px; line-height: 1;
+  cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.15); z-index: 5;
+}
+.round:active { transform: translateY(2px); }
+.tl { left: 22px; top: 18px; }
+.tr { right: 22px; top: 18px; }
+
+/* ---- Счётчик ---- */
+.count {
+  position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+  background: #fff; color: #d6336c; font-weight: bold; font-size: 26px;
+  padding: 8px 26px; border-radius: 30px; box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+  white-space: nowrap;
+}
+
+/* ---- Доска с картинкой и буквой ---- */
+#board {
+  position: absolute; left: 340px; top: 62px;
+  width: 610px; height: 382px;
+  background: #fff;
+  border: 16px solid #b78c3e; border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+}
+#board::before { /* верхняя «планка» доски */
+  content: ""; position: absolute; left: 150px; top: -48px;
+  width: 300px; height: 40px;
+  background: linear-gradient(#e0c17a, #b78c3e);
+  border: 6px solid #9a7430; border-bottom: none; border-radius: 10px 10px 0 0;
+}
+.pic {
+  position: absolute; left: 22px; top: 18px;
+  width: 300px; height: 220px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pic img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.pic .emoji { font-size: 170px; line-height: 1; }
+.letter {
+  position: absolute; left: 0; right: 0; bottom: -6px;
+  text-align: center;
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 230px; line-height: 1; color: #e4262b;
+}
+
+/* ---- Тигрёнок (placeholder) ---- */
+.tiger {
+  position: absolute; left: 120px; top: 360px;
+  font-size: 150px; line-height: 1;
+  animation: bounce 2s ease-in-out infinite;
+}
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* ---- Карточки с буквами ---- */
+#cards { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; pointer-events: none; }
+.card {
+  position: absolute; top: 500px;
+  width: 110px; height: 150px;
+  background: #fff; border: 6px solid #5fd34a; border-radius: 14px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.18);
+  font-family: Arial, sans-serif; font-weight: 900; font-size: 92px; line-height: 1;
+  color: #e4262b; cursor: pointer; pointer-events: auto;
+  transition: transform 0.1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.card:hover:not(:disabled) { transform: translateY(-6px); }
+.card:active:not(:disabled) { transform: translateY(2px); }
+.card:disabled { cursor: default; }
+.card.right { background: #b8f3a4; border-color: #2fb31a; }
+.card.wrong { animation: shake 0.45s; border-color: #ff7b7b; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-7px); }
+  80% { transform: translateX(5px); }
+}
+
+/* ---- Панель настроек ---- */
+.panel {
+  position: absolute; left: 50%; top: 170px; transform: translateX(-50%);
+  width: 360px; padding: 22px; background: #fff; border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.3); text-align: center; z-index: 20;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.panel h3 { color: #d6336c; font-size: 28px; }
+
+/* ---- Стартовый экран ---- */
+.title {
+  font-size: 150px; font-weight: 900; color: #e4262b; line-height: 1;
+  text-shadow: 6px 6px 0 #fff, 0 10px 0 rgba(0,0,0,0.12);
+}
+.subtitle { font-size: 36px; color: #7a3b8f; margin: 8px 0 14px; font-weight: bold; }
+.tigerBig { font-size: 150px; line-height: 1; animation: bounce 2s ease-in-out infinite; }
+.menu { display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 16px; }
+
+/* ---- Кнопки ---- */
+.btn {
+  font-size: 30px; font-weight: bold; color: #fff;
+  background: #ff6fa8; border: none; border-radius: 40px;
+  padding: 14px 40px; min-width: 300px;
+  box-shadow: 0 6px 0 #c94a80; cursor: pointer; font-family: inherit;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c94a80; }
+.btn.big { font-size: 38px; padding: 18px 50px; background: #4cc93a; box-shadow: 0 6px 0 #2f9424; }
+.btn.small { font-size: 22px; padding: 10px 18px; min-width: 0; }
+.btn:disabled { background: #cfc3d1; box-shadow: 0 6px 0 #aa9aab; cursor: default; }
+
+/* ---- Hud: кнопки и настройки поверх игры, не перехватывают клики ---- */
+#hud { pointer-events: none; z-index: 5; }
+#hud .round, #hud .panel, #hud .btn { pointer-events: auto; }
+
+/* ---- Закрепление: шарики ---- */
+#pop { overflow: hidden; }
+.popSign {
+  position: absolute; left: 50%; top: 18px; transform: translateX(-50%);
+  z-index: 3; display: flex; align-items: center; gap: 16px;
+  background: #fff; border: 6px solid #b78c3e; border-radius: 18px;
+  padding: 6px 26px 6px 26px; box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+.popHint { font-size: 30px; font-weight: bold; color: #7a3b8f; }
+.popTarget {
+  font-family: "Times New Roman", Georgia, serif;
+  font-size: 80px; line-height: 1; color: #e4262b; min-width: 60px; text-align: center;
+}
+.bWrap { position: absolute; left: 0; top: 0; z-index: 2; will-change: transform; }
+.balloon {
+  position: relative;
+  width: 124px; height: 146px; border-radius: 50% 50% 48% 48%;
+  border: 4px solid rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
+  font-family: Arial, sans-serif; font-weight: 900; font-size: 74px; line-height: 1;
+  color: #e4262b; cursor: pointer;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255,255,255,0.95) 0 7%, rgba(255,255,255,0.35) 12%, transparent 32%),
+    var(--c, #ffb3d1);
+  box-shadow: inset -12px -14px 0 rgba(0,0,0,0.10), 0 6px 12px rgba(0,0,0,0.18);
+}
+.balloon::after { /* ниточка */
+  content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 70px;
+  background: rgba(60,60,60,0.55); transform: translateX(-50%);
+}
+.balloon.wrong { animation: shake 0.45s; }
+.balloon.pop { animation: popAnim 0.25s forwards; pointer-events: none; }
+@keyframes popAnim {
+  from { transform: scale(1); opacity: 1; }
+  to   { transform: scale(1.5); opacity: 0; }
+}
+
+/* ---- Режим «Чтение» ---- */
+#read { overflow: hidden; }
+#readLayer { position: absolute; inset: 0; pointer-events: none; }
+.readBoard {
+  position: absolute; left: 200px; top: 150px; width: 880px; height: 200px;
+  background: rgba(255,255,255,0.8); border: 6px solid #9a9a9a; border-radius: 22px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+}
+.readTiger { left: 30px; top: 420px; font-size: 130px; cursor: pointer; pointer-events: auto; animation: none; }
+
+.tile {
+  position: absolute; width: 110px; height: 110px;
+  background: #fff; border: 5px solid #5fd34a; border-radius: 14px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+  font-family: Arial, sans-serif; font-weight: 900; font-size: 84px; line-height: 1; color: #e4262b;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; pointer-events: auto; user-select: none;
+  transition: opacity 0.2s;
+}
+.tile:not(.flyer):not(.used):hover { transform: translateY(-4px); }
+.tile.used { opacity: 0.25; pointer-events: none; }
+.tile.wrong { animation: shake 0.45s; }
+.tile.flyer {
+  transition: transform 0.7s ease-in-out;
+  pointer-events: none; z-index: 4;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+.slot {
+  position: absolute; top: 195px; width: 110px; height: 110px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: Arial, sans-serif; font-weight: 900; font-size: 84px; line-height: 1; color: #e4262b;
+  border-bottom: 8px solid rgba(90,90,90,0.45); border-radius: 4px;
+}
+.slot.filled { border-bottom-color: transparent; }
+
+/* ---- Карточки с картинкой (assets/img/cards/<буква>.png) ---- */
+.card.skin {
+  background-color: transparent;
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border: none;
+  box-shadow: none;
+}
+.card.skin.full { color: transparent; }  /* буква уже на картинке */
+.card.skin.right { box-shadow: 0 0 0 8px #2fb31a; border-radius: 14px; }
+.card.skin.wrong { animation: shake 0.45s; }

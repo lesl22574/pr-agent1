@@ -1,0 +1,323 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: #aee0f2;
+  font-family: 'Segoe UI', 'Nunito', Arial, sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+#stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1280px;
+  height: 720px;
+  transform-origin: center;
+  -webkit-transform-origin: center;
+  touch-action: none;
+  -ms-touch-action: none;
+  overflow: hidden;
+}
+
+#bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- доска с рамкой в полоску ---------- */
+
+#board {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  width: 810px;
+  height: 645px;
+  padding: 16px;
+  border-radius: 36px;
+  background: repeating-linear-gradient(135deg, #46d15c 0 16px, #eaffe9 16px 26px);
+  background: -webkit-repeating-linear-gradient(135deg, #46d15c 0 16px, #eaffe9 16px 26px);
+  border: 3px solid #35bd4a;
+  box-shadow: 0 10px 30px rgba(20, 80, 40, 0.25), inset 0 0 0 3px rgba(255, 255, 255, 0.55);
+}
+
+#board::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  border-radius: 26px;
+  background: #fcfdfe;
+  box-shadow: inset 0 0 18px rgba(120, 150, 170, 0.25);
+}
+
+#hint {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  margin-top: -18px;
+  z-index: 5;
+  opacity: 1;
+  -webkit-transition: opacity 0.35s;
+  transition: opacity 0.35s;
+}
+
+#hint.gone { opacity: 0; visibility: hidden; }
+
+@-webkit-keyframes hintPulse {
+  0%, 100% { margin-left: 0; }
+  50% { margin-left: 10px; }
+}
+@keyframes hintPulse {
+  0%, 100% { margin-left: 0; }
+  50% { margin-left: 10px; }
+}
+
+/* ---------- буква ---------- */
+
+#letterWrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  /* размер задаёт game.js по пропорциям спрайта */
+  z-index: 4;
+}
+
+#letterWrap.bounce {
+  -webkit-animation: bounce 0.7s ease;
+  animation: bounce 0.7s ease;
+}
+
+@-webkit-keyframes bounce {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  30% { transform: translate(-50%, -50%) scale(1.12); }
+  55% { transform: translate(-50%, -50%) scale(0.95); }
+  78% { transform: translate(-50%, -50%) scale(1.05); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes bounce {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  30% { transform: translate(-50%, -50%) scale(1.12); }
+  55% { transform: translate(-50%, -50%) scale(0.95); }
+  78% { transform: translate(-50%, -50%) scale(1.05); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+#cleanLetter, #foamCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#foamCanvas {
+  -webkit-transition: opacity 0.45s ease;
+  transition: opacity 0.45s ease;
+}
+
+#fxCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* ---------- полотенце: предмет, который берём курсором ---------- */
+
+#towelWrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 150px;
+  z-index: 30;
+  cursor: grab;
+  cursor: -webkit-grab;
+  touch-action: none;
+}
+
+#towelWrap.drag { cursor: grabbing; cursor: -webkit-grabbing; }
+
+#towel {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 8px rgba(30, 60, 40, 0.3));
+  -webkit-filter: drop-shadow(0 6px 8px rgba(30, 60, 40, 0.3));
+  transform-origin: 50% 60%;
+  -webkit-transform-origin: 50% 60%;
+}
+
+#towelWrap.idle #towel { /* пульсацию ведёт game.js */ }
+
+@-webkit-keyframes towelPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+@keyframes towelPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+#grabTip {
+  position: absolute;
+  left: 365px;
+  top: 214px;
+  margin-left: -90px;
+  width: 180px;
+  text-align: center;
+  z-index: 31;
+  background: #fff;
+  border: 3px solid #46d15c;
+  color: #2e9e44;
+  font-weight: 800;
+  font-size: 20px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(20, 80, 40, 0.2);
+  -webkit-transition: opacity 0.35s;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+
+#grabTip.gone { opacity: 0; visibility: hidden; }
+
+@-webkit-keyframes tipBounce {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -8px; }
+}
+@keyframes tipBounce {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -8px; }
+}
+
+/* ---------- кнопки ---------- */
+
+#homeBtn, #muteBtn {
+  position: absolute;
+  top: 14px;
+  z-index: 40;
+  cursor: pointer;
+  border: none;
+  border-radius: 14px;
+  padding: 5px;
+  background: repeating-linear-gradient(135deg, #46d15c 0 10px, #eaffe9 10px 16px);
+  background: -webkit-repeating-linear-gradient(135deg, #46d15c 0 10px, #eaffe9 10px 16px);
+  box-shadow: 0 4px 10px rgba(20, 80, 40, 0.3);
+}
+
+#homeBtn { right: 14px; }
+#muteBtn { right: 84px; font-size: 24px; line-height: 1; padding: 9px 12px; background: #ffffff; background: rgba(255, 255, 255, 0.85); }
+
+#homeBtn span {
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: #fff;
+  text-align: center;
+}
+
+/* ---------- победный экран ---------- */
+
+#winOverlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  display: -webkit-flex;
+  align-items: center;
+  -webkit-align-items: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  background: #ffffff;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: default;
+}
+
+#winOverlay.hidden { display: none; }
+
+#winCard {
+  background: #fff;
+  border-radius: 28px;
+  border: 5px solid #46d15c;
+  padding: 30px 56px 34px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(20, 80, 40, 0.3);
+  -webkit-animation: cardIn 0.4s ease;
+  animation: cardIn 0.4s ease;
+}
+
+@-webkit-keyframes cardIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes cardIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+#winStars { height: 58px; margin-bottom: 6px; }
+
+.star {
+  display: inline-block;
+  font-size: 52px;
+  color: #d7dde3;
+  -webkit-animation: starPop 0.45s ease backwards;
+  animation: starPop 0.45s ease backwards;
+}
+
+.star.on { color: #ffb400; text-shadow: 0 2px 0 #e08e00; }
+
+@-webkit-keyframes starPop {
+  0% { transform: scale(0) rotate(-40deg); }
+  70% { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes starPop {
+  0% { transform: scale(0) rotate(-40deg); }
+  70% { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+#winTitle { font-size: 40px; font-weight: 800; color: #2e9e44; }
+#winSub { font-size: 22px; color: #5b6770; margin: 6px 0 18px; }
+
+#winButtons button {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background: #46d15c;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 30px;
+  margin: 0 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #2fa843;
+  -webkit-transition: transform 0.12s;
+  transition: transform 0.12s;
+}
+
+#winButtons button:hover { transform: translateY(-2px); }
+#winButtons button:active { transform: translateY(2px); box-shadow: 0 1px 0 #2fa843; }
+#againBtn { background: #8fd45f; box-shadow: 0 4px 0 #6cae3d; }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Вытри букву!</title>
+<link rel="stylesheet" href="css/style.css?v=4">
+</head>
+<body>
+<div id="stage">
+  <img id="bg" src="assets/bg.png" alt="" draggable="false">
+
+  <div id="board">
+    <div id="hint">
+      <svg width="54" height="36" viewBox="0 0 54 36" aria-hidden="true">
+        <path d="M0 12 h28 V2 l26 16 -26 16 V24 H0 z" fill="#2f9fe0"/>
+      </svg>
+    </div>
+    <div id="letterWrap">
+      <img id="cleanLetter" alt="" draggable="false">
+      <canvas id="foamCanvas"></canvas>
+    </div>
+  </div>
+
+  <canvas id="fxCanvas"></canvas>
+  <div id="towelWrap" class="idle">
+    <img id="towel" src="assets/towel.png" alt="" draggable="false">
+  </div>
+  <div id="grabTip">Возьми полотенце!</div>
+
+  <button id="muteBtn" title="Звук">♪</button>
+  <button id="homeBtn" title="Сначала">
+    <span>
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+        <path d="M12 2.6 1.8 12h3.1v9.4h5.5v-6.2h3.2v6.2h5.5V12h3.1z" fill="#3ecf52"/>
+      </svg>
+    </span>
+  </button>
+
+  <div id="winOverlay" class="hidden">
+    <div id="winCard">
+      <div id="winStars"></div>
+      <div id="winTitle">Молодец!</div>
+      <div id="winSub"></div>
+      <div id="winButtons">
+        <button id="againBtn">Ещё раз</button>
+        <button id="nextBtn">Дальше</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/letters.js?v=4"></script>
+<script src="js/game.js?v=4"></script>
+</body>
+</html>

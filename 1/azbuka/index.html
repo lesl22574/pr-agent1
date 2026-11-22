@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Азбука — изучение букв</title>
+  <!-- SDK Яндекс Игр (GameReady) -->
+  <script src="https://yandex.ru/games/sdk/v2"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+    <div id="bg"></div>
+
+    <!-- ===== Режим 1: выбор карточки с буквой ===== -->
+    <div id="game" class="screen hidden">
+      <div id="count" class="count"></div>
+
+      <div id="board">
+        <div id="pic" class="pic"></div>
+        <div id="letter" class="letter"></div>
+      </div>
+
+      <div id="tiger" class="tiger">🐯</div>
+
+      <div id="cards"></div>
+    </div>
+
+    <!-- ===== Закрепление: лопаем шарики с буквой ===== -->
+    <div id="pop" class="screen hidden">
+      <div class="popSign">
+        <span class="popHint">Лопни букву</span>
+        <span id="popTarget" class="popTarget"></span>
+      </div>
+    </div>
+
+    <!-- ===== Режим 2: чтение слов ===== -->
+    <div id="read" class="screen hidden">
+      <div id="readCount" class="count"></div>
+      <div id="readBoard" class="readBoard"></div>
+      <div id="readTiger" class="tiger readTiger" title="Послушать слово">🐯</div>
+      <div id="readLayer"></div>
+    </div>
+
+    <!-- ===== Кнопки и настройки (видны в игре) ===== -->
+    <div id="hud" class="screen hidden">
+      <button id="btnSettings" class="round tl" title="Настройки">⚙</button>
+      <button id="btnHome" class="round tr" title="В меню">⌂</button>
+
+      <div id="settings" class="panel hidden">
+        <h3>Настройки</h3>
+        <button id="btnSound" class="btn small">Звук: вкл</button>
+        <button id="btnReset" class="btn small">Сбросить прогресс</button>
+        <button id="btnCloseSettings" class="btn small">Закрыть</button>
+      </div>
+    </div>
+
+    <!-- ===== Стартовый экран ===== -->
+    <div id="start" class="screen overlay">
+      <div class="title">Азбука</div>
+      <div class="subtitle">Учим буквы вместе!</div>
+      <div class="tigerBig">🐯</div>
+      <div class="menu">
+        <button id="btnPlay" class="btn big">Изучение букв</button>
+        <button id="btnRead" class="btn big">Чтение</button>
+        <button id="btnRestart" class="btn hidden">Буквы: начать сначала</button>
+      </div>
+    </div>
+
+    <!-- ===== Финальный экран ===== -->
+    <div id="end" class="screen overlay hidden">
+      <div class="title">Ура!</div>
+      <div id="endSub" class="subtitle">Ты выучил все буквы!</div>
+      <div class="tigerBig">🐯</div>
+      <div class="menu">
+        <button id="btnEndAgain" class="btn big">Играть сначала</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
