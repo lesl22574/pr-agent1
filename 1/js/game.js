@@ -114,17 +114,31 @@
   function speak(text) {
     if (!canSound()) { if (soundOn) pendingVoice = { file: null, text }; return; }
     if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
     const u = new window.SpeechSynthesisUtterance(text);
     u.lang = 'ru-RU';
+    // Голоса могут появиться только после первого обращения к движку.
+    try {
+      const voices = window.speechSynthesis.getVoices();
+      const russian = voices.find((voice) => /^ru([_-]|$)/i.test(voice.lang));
+      if (russian) u.voice = russian;
+    } catch (e) { /* Без списка голосов браузер выберет голос по u.lang. */ }
     u.rate = 0.9;
     u.pitch = 1.1;
     // Сохраняем ссылку до окончания: WebView может преждевременно освободить
     // локальный объект реплики после перехода между режимами.
     currentUtterance = u;
-    u.onend = u.onerror = () => { if (currentUtterance === u) currentUtterance = null; };
+    const session = sceneSession;
+    u.onend = () => { if (currentUtterance === u) currentUtterance = null; };
+    u.onerror = (event) => {
+      if (currentUtterance !== u) return;
+      currentUtterance = null;
+      if (session === sceneSession && soundOn && event && event.error === 'not-allowed') {
+        pendingVoice = { file: null, text };
+      }
+    };
     window.speechSynthesis.speak(u);
+    // Важно: возобновляем после постановки реплики в очередь, не до неё.
+    window.speechSynthesis.resume();
   }
 
   // Проигрывает файл; если файла нет — синтез речи с текстом fallbackText
@@ -146,12 +160,12 @@
 
   const letterFile = (letter) => {
     const level = LEVELS.find((item) => item.letter === letter.toUpperCase());
-    return (level && level.letterSound) || `assets/audio/letters/${letter.toUpperCase()}.mp3`;
+    return (level && level.letterSound) || null;
   };
   const wordFile = (word) => {
     const normalized = word.toLowerCase();
     const entry = READ_WORDS.find((item) => item.word.toLowerCase() === normalized);
-    return (entry && entry.sound) || `assets/audio/words/${normalized}.mp3`;
+    return (entry && entry.sound) || null;
   };
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 

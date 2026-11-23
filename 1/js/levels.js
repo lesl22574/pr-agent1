@@ -24,27 +24,29 @@ window.LEVELS = [
   { letter: 'К', word: 'кошка',    emoji: '🐱', image: 'assets/img/ko.png',   sound: 'assets/audio/k_l.mp3' },
   { letter: 'Л', word: 'лук',    emoji: '🍋', image: 'assets/img/luk.png',    sound: 'assets/audio/l_l.mp3' },
   { letter: 'М', word: 'мышь',      emoji: '⚽', image: 'assets/img/mish.png',    sound: 'assets/audio/m_l.mp3' },
-  { letter: 'Н', word: 'нос',      emoji: '👃', image: 'assets/img/nos.png',      sound: 'assets/audio/nos.mp3' },
-  { letter: 'О', word: 'облако',   emoji: '☁️', image: 'assets/img/oblako.png',   sound: 'assets/audio/oblako.mp3' },
-  { letter: 'П', word: 'петух',    emoji: '🐓', image: 'assets/img/petuh.png',    sound: 'assets/audio/petuh.mp3' },
-  { letter: 'Р', word: 'рыба',     emoji: '🐟', image: 'assets/img/ryba.png',     sound: 'assets/audio/ryba.mp3' },
-  { letter: 'С', word: 'слон',     emoji: '🐘', image: 'assets/img/slon.png',     sound: 'assets/audio/slon.mp3' },
-  { letter: 'Т', word: 'тигр',     emoji: '🐯', image: 'assets/img/tigr.png',     sound: 'assets/audio/tigr.mp3' },
-  { letter: 'У', word: 'утка',     emoji: '🦆', image: 'assets/img/utka.png',     sound: 'assets/audio/utka.mp3' },
-  { letter: 'Ф', word: 'фонарь',   emoji: '🏮', image: 'assets/img/fonar.png',    sound: 'assets/audio/fonar.mp3' },
-  { letter: 'Х', word: 'хлеб',     emoji: '🍞', image: 'assets/img/hleb.png',     sound: 'assets/audio/hleb.mp3' },
-  { letter: 'Ц', word: 'цветок',   emoji: '🌸', image: 'assets/img/cvetok.png',   sound: 'assets/audio/cvetok.mp3' },
-  { letter: 'Ч', word: 'чашка',    emoji: '☕', image: 'assets/img/chashka.png',  sound: 'assets/audio/chashka.mp3' },
-  { letter: 'Ш', word: 'шар',      emoji: '🎈', image: 'assets/img/shar.png',     sound: 'assets/audio/shar.mp3' },
-  { letter: 'Щ', word: 'щенок',    emoji: '🐶', image: 'assets/img/shenok.png',   sound: 'assets/audio/shenok.mp3' },
-  { letter: 'Э', word: 'эскимо',   emoji: '🍦', image: 'assets/img/eskimo.png',   sound: 'assets/audio/eskimo.mp3' },
-  { letter: 'Ю', word: 'юла',      emoji: '🪀', image: 'assets/img/yula.png',     sound: 'assets/audio/yula.mp3' },
-  { letter: 'Я', word: 'ягода',    emoji: '🍓', image: 'assets/img/yagoda.png',   sound: 'assets/audio/yagoda.mp3' }
+  { letter: 'Н', word: 'нос',      emoji: '👃', image: 'assets/img/nos.png',      sound: null },
+  { letter: 'О', word: 'облако',   emoji: '☁️', image: 'assets/img/oblako.png',   sound: null },
+  { letter: 'П', word: 'петух',    emoji: '🐓', image: 'assets/img/petuh.png',    sound: null },
+  { letter: 'Р', word: 'рыба',     emoji: '🐟', image: 'assets/img/ryba.png',     sound: null },
+  { letter: 'С', word: 'слон',     emoji: '🐘', image: 'assets/img/slon.png',     sound: null },
+  { letter: 'Т', word: 'тигр',     emoji: '🐯', image: 'assets/img/tigr.png',     sound: null },
+  { letter: 'У', word: 'утка',     emoji: '🦆', image: 'assets/img/utka.png',     sound: null },
+  { letter: 'Ф', word: 'фонарь',   emoji: '🏮', image: 'assets/img/fonar.png',    sound: null },
+  { letter: 'Х', word: 'хлеб',     emoji: '🍞', image: 'assets/img/hleb.png',     sound: null },
+  { letter: 'Ц', word: 'цветок',   emoji: '🌸', image: 'assets/img/cvetok.png',   sound: null },
+  { letter: 'Ч', word: 'чашка',    emoji: '☕', image: 'assets/img/chashka.png',  sound: null },
+  { letter: 'Ш', word: 'шар',      emoji: '🎈', image: 'assets/img/shar.png',     sound: null },
+  { letter: 'Щ', word: 'щенок',    emoji: '🐶', image: 'assets/img/shenok.png',   sound: null },
+  { letter: 'Э', word: 'эскимо',   emoji: '🍦', image: 'assets/img/eskimo.png',   sound: null },
+  { letter: 'Ю', word: 'юла',      emoji: '🪀', image: 'assets/img/yula.png',     sound: null },
+  { letter: 'Я', word: 'ягода',    emoji: '🍓', image: 'assets/img/yagoda.png',   sound: null }
 ];
 
 // Слова для режима «Чтение».
 // Буквы слова перемешиваются на верхнем ряду, игрок нажимает их по порядку.
-// Озвучка: слово — assets/audio/words/<слово>.mp3, буквы — assets/audio/letters/<буква>.mp3
+// Без sound слово произносится сразу речевым синтезом.
+// Для своей записи задайте sound: 'assets/audio/words/<слово>.mp3'.
+// Для отдельной буквы задайте letterSound у записи LEVELS.
 window.READ_WORDS = [
   { word: 'дом' },
   { word: 'кот' },

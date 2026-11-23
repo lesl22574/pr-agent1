@@ -40,7 +40,7 @@ const context = vm.createContext({
   window: { addEventListener(type, fn) { (windowEvents[type] ||= []).push(fn); } },
   localStorage: { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) },
   LEVELS: ['А', 'Б', 'В', 'Г'].map(letter => ({ letter, word: letter, image: letter + '.png', sound: letter + '.mp3', letterSound: 'letter-' + letter + '.mp3' })),
-  READ_WORDS: [{ word: 'а' }], Math: math, clearTimeout() {},
+  READ_WORDS: [{ word: 'а', sound: 'assets/audio/words/а.mp3' }], Math: math, clearTimeout() {},
   requestAnimationFrame() { return 1; }, cancelAnimationFrame() {}, setTimeout(fn) { timers.push(fn); },
 });
 let source = fs.readFileSync(path.join(__dirname, '../1/js/game.js'), 'utf8');
@@ -358,16 +358,18 @@ console.log('HOME_ICON_OK');
   // Отсутствие отдельной записи не разрешает подставлять инструкцию карточек.
   const savedLetterSound = context.LEVELS[0].letterSound;
   delete context.LEVELS[0].letterSound;
-  assert.equal(test.letterFile('А'), 'assets/audio/letters/А.mp3');
+  assert.equal(test.letterFile('А'), null);
   assert.notEqual(test.letterFile('А'), context.LEVELS[0].sound);
-  assert.equal(test.wordFile('а'), 'assets/audio/words/а.mp3');
+  const savedWordSound = context.READ_WORDS[0].sound;
+  delete context.READ_WORDS[0].sound;
+  assert.equal(test.wordFile('а'), null);
   assert.notEqual(test.wordFile('а'), context.LEVELS[0].sound);
   context.LEVELS[0].letterSound = savedLetterSound;
   // Только явная отдельная запись слова имеет приоритет.
 
   context.READ_WORDS[0].sound = 'word-a.mp3';
   assert.equal(test.wordFile('А'), 'word-a.mp3');
-  delete context.READ_WORDS[0].sound;
+  context.READ_WORDS[0].sound = savedWordSound;
   // Нет файла: резервный речевой синтез тоже доступен после смены режима.
   const wordAudio = [];
   context.Audio = class {
@@ -397,6 +399,34 @@ console.log('HOME_ICON_OK');
   context.window.azbukaWipeStarted(wipeScene, { char: 'Б' });
   assert.equal(wordAudio.length, beforeStaleIntro, 'вступление не запускается после выхода в меню');
   console.log('WIPE_INTRO_AUDIO_OK');
+  const utterances = [];
+  const russianVoice = { lang: 'ru-RU', name: 'Russian' };
+  context.window.speechSynthesis.getVoices = () => [{ lang: 'en-US' }, russianVoice];
+  context.window.speechSynthesis.speak = utterance => { utterances.push(utterance); spoken.push(utterance.text); };
+  context.window.GAME_SETTINGS.showPlaceholders = false;
+  const previousLevelSound = context.LEVELS[0].sound;
+  context.LEVELS[0].sound = null;
+  test.startLetters(true);
+  const audioBeforeSynthesis = wordAudio.length;
+  test.renderActualLevel();
+  assert.equal(wordAudio.length, audioBeforeSynthesis, 'нет попытки загрузить отсутствующий MP3');
+  assert.equal(utterances.at(-1).text, 'А. Буква А.');
+  assert.equal(utterances.at(-1).voice, russianVoice);
+  delete context.READ_WORDS[0].sound;
+  test.startRead(true);
+  assert.equal(utterances.at(-1).text, 'А', 'чтение синтезируется независимо от заглушек картинок');
+  assert.equal(wordAudio.length, audioBeforeSynthesis);
+  const blockedSpeech = utterances.at(-1);
+  blockedSpeech.onerror({ error: 'not-allowed' });
+  const utteranceCount = utterances.length;
+  windowEvents.pointerdown.forEach(fn => fn({ isTrusted: true, target: element('btnHome') }));
+  assert.equal(utterances.length, utteranceCount + 1, 'повтор заблокированной речи после жеста');
+  sdkEvents.game_api_pause();
+  test.playVoice(null, 'Слово после рекламы');
+  sdkEvents.game_api_resume();
+  assert.equal(utterances.at(-1).text, 'Слово после рекламы');
+  context.LEVELS[0].sound = previousLevelSound;
+  console.log('SYNTHESIS_WITHOUT_FILES_AND_IMAGE_PLACEHOLDERS_OK');
   delete context.window.YaGames;
   await test.initSdk();
   assert.equal(context.window.YANDEX_LANGUAGE, 'ru');
