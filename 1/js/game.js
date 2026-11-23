@@ -76,9 +76,15 @@
     const paused = !canSound();
     if (paused) {
       if (currentAudio) currentAudio.pause();
-      if (window.speechSynthesis && window.speechSynthesis.pause) window.speechSynthesis.pause();
+      // Не используем нативный pause(): в некоторых WebView после рекламы
+      // он блокирует и все следующие реплики. Сохраняем текст и отменяем речь.
+      if (currentUtterance) {
+        const text = currentUtterance.text;
+        currentUtterance = null;
+        if (soundOn && !pendingVoice) pendingVoice = { file: null, text };
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+      }
     } else if (audioPaused) {
-      if (window.speechSynthesis) window.speechSynthesis.resume();
       if (currentAudio && !currentAudio.ended && !pendingVoice) {
         const audio = currentAudio;
         const attempt = audio.play();
@@ -93,22 +99,23 @@
     audioPaused = paused;
     setWipeAdPaused(paused);
     updateMenuMusic();
+    // Сначала продолжаем текущее задание после рекламы: оно может заменить
+    // сохранённую реплику старого экрана своей новой инструкцией.
+    if (!adPause && !backgroundPaused()) {
+      while (deferredAdDone.length && !adPause && !backgroundPaused()) deferredAdDone.shift()();
+    }
     if (!paused && pendingVoice) {
       const voice = pendingVoice;
       pendingVoice = null;
       playVoice(voice.file, voice.text);
-    }
-    // Результат рекламы продолжается лишь после возврата активности окна/SDK.
-    if (!adPause && !backgroundPaused()) {
-      while (deferredAdDone.length && !adPause && !backgroundPaused()) deferredAdDone.shift()();
     }
   }
 
   function stopSound() {
     pendingVoice = null;
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     currentUtterance = null;
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }
 
   function speak(text) {
@@ -116,12 +123,6 @@
     if (!('speechSynthesis' in window)) return;
     const u = new window.SpeechSynthesisUtterance(text);
     u.lang = 'ru-RU';
-    // Голоса могут появиться только после первого обращения к движку.
-    try {
-      const voices = window.speechSynthesis.getVoices();
-      const russian = voices.find((voice) => /^ru([_-]|$)/i.test(voice.lang));
-      if (russian) u.voice = russian;
-    } catch (e) { /* Без списка голосов браузер выберет голос по u.lang. */ }
     u.rate = 0.9;
     u.pitch = 1.1;
     // Сохраняем ссылку до окончания: WebView может преждевременно освободить
@@ -136,9 +137,10 @@
         pendingVoice = { file: null, text };
       }
     };
+    // Только восстанавливаем уже приостановленный внешним кодом движок.
+    // Обычный запуск — как в исходной игре: новая реплика с lang=ru-RU.
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
     window.speechSynthesis.speak(u);
-    // Важно: возобновляем после постановки реплики в очередь, не до неё.
-    window.speechSynthesis.resume();
   }
 
   // Проигрывает файл; если файла нет — синтез речи с текстом fallbackText

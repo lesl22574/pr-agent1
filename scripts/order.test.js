@@ -167,8 +167,9 @@ console.log('HOME_ICON_OK');
 (async () => {
   const spoken = [];
   let resumes = 0;
+  let speechCancels = 0;
   context.window.speechSynthesis = {
-    cancel() {}, resume() { resumes++; }, speak(utterance) { spoken.push(utterance.text); },
+    cancel() { speechCancels++; }, resume() { resumes++; this.paused = false; }, speak(utterance) { spoken.push(utterance.text); },
   };
   context.window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
   context.Audio = class {
@@ -192,7 +193,7 @@ console.log('HOME_ICON_OK');
   }
   assert.equal(completed, 2);
   assert.equal(spoken.length, 2);
-  assert.ok(resumes >= 2);
+  assert.equal(resumes, 0, 'нет лишнего resume у работающего речевого движка');
   test.playVoice('letter.mp3', 'Резервная озвучка');
   await Promise.resolve();
   assert.equal(spoken.at(-1), 'Резервная озвучка');
@@ -235,7 +236,7 @@ console.log('HOME_ICON_OK');
   assert.equal(test.canSound(), false);
   assert.equal(activeVoice.playing, false);
   assert.equal(wipePauses.at(-1), true);
-  assert.ok(speechPauses > 0);
+  assert.equal(speechPauses, 0, 'нативный speechSynthesis.pause больше не используется');
   context.document.hidden = true;
   documentEvents.visibilitychange();
   sdkEvents.game_api_resume();
@@ -411,7 +412,7 @@ console.log('HOME_ICON_OK');
   test.renderActualLevel();
   assert.equal(wordAudio.length, audioBeforeSynthesis, 'нет попытки загрузить отсутствующий MP3');
   assert.equal(utterances.at(-1).text, 'А. Буква А.');
-  assert.equal(utterances.at(-1).voice, russianVoice);
+  assert.equal(utterances.at(-1).lang, 'ru-RU');
   delete context.READ_WORDS[0].sound;
   test.startRead(true);
   assert.equal(utterances.at(-1).text, 'А', 'чтение синтезируется независимо от заглушек картинок');
@@ -426,6 +427,45 @@ console.log('HOME_ICON_OK');
   sdkEvents.game_api_resume();
   assert.equal(utterances.at(-1).text, 'Слово после рекламы');
   context.LEVELS[0].sound = previousLevelSound;
+  // Реалистичная проверка: pause зависал бы навсегда, а cancel очищает речь.
+  let engineSpeech = null;
+  context.window.speechSynthesis.pause = () => { throw new Error('запрещено вызывать native pause'); };
+  context.window.speechSynthesis.speak = utterance => {
+    assert.equal(!!context.window.speechSynthesis.paused, false);
+    engineSpeech = utterance;
+  };
+  context.window.speechSynthesis.cancel = () => { engineSpeech = null; speechCancels++; };
+  test.playVoice(null, 'Фраза до переключения');
+  assert.equal(engineSpeech.text, 'Фраза до переключения');
+  context.document.hidden = true;
+  documentEvents.visibilitychange();
+  assert.equal(engineSpeech, null, 'речь выключена, а не поставлена на native pause');
+  context.document.hidden = false;
+  documentEvents.visibilitychange();
+  assert.equal(engineSpeech.text, 'Фраза до переключения', 'реплика перезапускается после возврата');
+  context.window.speechSynthesis.paused = true;
+  test.playVoice(null, 'Восстановление внешней паузы');
+  assert.equal(engineSpeech.text, 'Восстановление внешней паузы');
+  assert.equal(context.window.speechSynthesis.paused, false);
+  test.startRead(true);
+  assert.equal(engineSpeech.text, 'А');
+  test.startLetters(true);
+  context.LEVELS[0].sound = null;
+  test.renderActualLevel();
+  assert.equal(engineSpeech.text, 'А. Буква А.');
+  for (let repeat = 0; repeat < 2; repeat++) {
+    test.showInterstitial(() => test.playVoice(null, 'Речь после рекламы'));
+    callbacks.onOpen();
+    sdkEvents.game_api_pause();
+    assert.equal(engineSpeech, null);
+    callbacks.onClose();
+    assert.equal(engineSpeech, null);
+    sdkEvents.game_api_resume();
+    assert.equal(engineSpeech.text, 'Речь после рекламы');
+    test.startRead(true);
+    assert.equal(engineSpeech.text, 'А');
+  }
+  console.log('SYNTHESIS_CANCEL_RESTART_OK');
   console.log('SYNTHESIS_WITHOUT_FILES_AND_IMAGE_PLACEHOLDERS_OK');
   delete context.window.YaGames;
   await test.initSdk();
