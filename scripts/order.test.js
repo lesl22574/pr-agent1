@@ -49,7 +49,7 @@ source = source.slice(0, source.indexOf('  // ---------- Старт ----------')
   const renderActualLevel = renderLevel;
   renderLevel = function () {};
   window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
-    index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile,
+    index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile, letterFile,
     tapReadTarget() { onTileTap(read.tiles.find(tile => !tile.used && tile.letter === read.letters[read.pos])); },
     tapTarget() { onBalloonTap({ target: true, letter: pop.target, el: { remove() {} }, ball: document.getElementById("testBall") }); },
     initSdk, showInterstitial, playVoice, canSound,
@@ -207,7 +207,7 @@ console.log('HOME_ICON_OK');
   callbacks.onClose();
   assert.equal(afterAd, 1);
   await Promise.resolve();
-  assert.equal(spoken.at(-1), 'Буква А. Молодец!');
+  assert.equal(spoken.length, beforeAdSpeech, 'после очистки буквы нет речевой озвучки');
   const sdkEvents = {};
   context.window.YaGames = { init: async () => ({
     environment: { i18n: { lang: 'en' } },
@@ -315,11 +315,14 @@ console.log('HOME_ICON_OK');
   callbacks.onClose();
   sdkEvents.game_api_resume();
   assert.equal(element('pop').classList.contains('hidden'), false);
-  assert.equal(audio.at(-1).src, 'letter-А.mp3');
-  assert.equal(audio.at(-1).playing, true);
+  assert.equal(spoken.at(-1), 'Лопай шарики с буквой А');
   test.tapTarget();
   assert.equal(audio.at(-1).src, 'letter-А.mp3');
   assert.equal(audio.at(-1).playing, true);
+  context.LEVELS[0].popSound = 'pop-intro-a.mp3';
+  test.startPop();
+  assert.equal(audio.at(-1).src, 'pop-intro-a.mp3');
+  delete context.LEVELS[0].popSound;
   console.log('AFTER_AD_MODE_SWITCH_BALLOONS_OK');
   // Чтение после рекламы в каждом из двух других режимов.
   for (const previousMode of ['wipe', 'letters']) {
@@ -341,7 +344,7 @@ console.log('HOME_ICON_OK');
     assert.equal(element('read').classList.contains('hidden'), false);
     assert.equal(element('pop').classList.contains('hidden'), true);
     assert.equal(element('wipe').classList.contains('hidden'), true);
-    assert.equal(audio.at(-1).src, 'А.mp3', 'слово использует существующую запись уровня');
+    assert.equal(audio.at(-1).src, 'assets/audio/words/а.mp3', 'слово не использует инструкцию карточек');
     assert.equal(audio.at(-1).playing, true);
     sdkEvents.game_api_resume();
     assert.equal(element('read').classList.contains('hidden'), false, 'старый callback не переключает режим');
@@ -349,10 +352,19 @@ console.log('HOME_ICON_OK');
     assert.equal(audio.at(-1).src, 'letter-А.mp3');
     assert.equal(audio.at(-1).playing, true);
     element('readTiger').handlers.click();
-    assert.equal(audio.at(-1).src, 'А.mp3');
+    assert.equal(audio.at(-1).src, 'assets/audio/words/а.mp3');
     assert.equal(audio.at(-1).playing, true, 'повтор слова после рекламы');
   }
-  // Для отдельной записи слова — приоритет перед записью предмета.
+  // Отсутствие отдельной записи не разрешает подставлять инструкцию карточек.
+  const savedLetterSound = context.LEVELS[0].letterSound;
+  delete context.LEVELS[0].letterSound;
+  assert.equal(test.letterFile('А'), 'assets/audio/letters/А.mp3');
+  assert.notEqual(test.letterFile('А'), context.LEVELS[0].sound);
+  assert.equal(test.wordFile('а'), 'assets/audio/words/а.mp3');
+  assert.notEqual(test.wordFile('а'), context.LEVELS[0].sound);
+  context.LEVELS[0].letterSound = savedLetterSound;
+  // Только явная отдельная запись слова имеет приоритет.
+
   context.READ_WORDS[0].sound = 'word-a.mp3';
   assert.equal(test.wordFile('А'), 'word-a.mp3');
   delete context.READ_WORDS[0].sound;

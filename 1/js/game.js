@@ -146,13 +146,12 @@
 
   const letterFile = (letter) => {
     const level = LEVELS.find((item) => item.letter === letter.toUpperCase());
-    return (level && (level.letterSound || level.sound)) || `assets/audio/letters/${letter.toUpperCase()}.mp3`;
+    return (level && level.letterSound) || `assets/audio/letters/${letter.toUpperCase()}.mp3`;
   };
   const wordFile = (word) => {
     const normalized = word.toLowerCase();
     const entry = READ_WORDS.find((item) => item.word.toLowerCase() === normalized);
-    const level = LEVELS.find((item) => item.word.toLowerCase() === normalized);
-    return (entry && entry.sound) || (level && level.sound) || `assets/audio/words/${normalized}.mp3`;
+    return (entry && entry.sound) || `assets/audio/words/${normalized}.mp3`;
   };
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -244,7 +243,6 @@
       if (session !== sceneSession || ui.wipe.classList.contains('hidden') || ui.wipe.contentWindow !== scene || ui.wipe.src !== source) return;
       gameplayStart();
       afterAd();
-      playVoice(letterFile(detail.char), `Буква ${detail.char}. Молодец!`);
     });
   };
 
@@ -526,7 +524,7 @@
       done: false
     };
 
-    playVoice(letterFile(lv.letter), `Лопай шарики с буквой ${lv.letter}`);
+    playVoice(lv.popSound || null, `Лопай шарики с буквой ${lv.letter}`);
     pop.raf = requestAnimationFrame(popFrame);
   }
 
