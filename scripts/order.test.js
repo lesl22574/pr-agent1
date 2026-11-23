@@ -21,6 +21,7 @@ function element(id) {
       removeAttribute(name) { delete this[name]; },
       querySelectorAll() { return []; },
       appendChild(child) { this.child = child; },
+      contains(target) { return target === this || target === element('btnHome'); },
     });
   }
   return elements.get(id);
@@ -35,19 +36,23 @@ const windowEvents = {};
 const documentEvents = {};
 const context = vm.createContext({
   Image: class { constructor() { images.push(this); } },
-  document: { getElementById: element, addEventListener(type, fn) { documentEvents[type] = fn; } },
+  document: { createElement: () => element('created-' + Math.random()), getElementById: element, addEventListener(type, fn) { documentEvents[type] = fn; } },
   window: { addEventListener(type, fn) { (windowEvents[type] ||= []).push(fn); } },
   localStorage: { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) },
-  LEVELS: ['А', 'Б', 'В', 'Г'].map(letter => ({ letter })),
-  READ_WORDS: [], Math: math, clearTimeout() {},
-  cancelAnimationFrame() {}, setTimeout(fn) { timers.push(fn); },
+  LEVELS: ['А', 'Б', 'В', 'Г'].map(letter => ({ letter, word: letter, image: letter + '.png', sound: letter + '.mp3', letterSound: 'letter-' + letter + '.mp3' })),
+  READ_WORDS: [{ word: 'а' }], Math: math, clearTimeout() {},
+  requestAnimationFrame() { return 1; }, cancelAnimationFrame() {}, setTimeout(fn) { timers.push(fn); },
 });
 let source = fs.readFileSync(path.join(__dirname, '../1/js/game.js'), 'utf8');
 // Не запускаем Canvas/озвучку; тестируем реальные функции выбора и переходов.
 source = source.slice(0, source.indexOf('  // ---------- Старт ----------')) + `
+  const renderActualLevel = renderLevel;
   renderLevel = function () {};
   window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
-    index: () => levelIdx, initSdk, showInterstitial, playVoice, canSound,
+    index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile,
+    tapReadTarget() { onTileTap(read.tiles.find(tile => !tile.used && tile.letter === read.letters[read.pos])); },
+    tapTarget() { onBalloonTap({ target: true, letter: pop.target, el: { remove() {} }, ball: document.getElementById("testBall") }); },
+    initSdk, showInterstitial, playVoice, canSound,
     setSdk(sdk) { ysdk = sdk; },
     finishBalloons() { pop = { raf: 0 }; finishPop(); } };
 })();`;
@@ -177,6 +182,7 @@ console.log('HOME_ICON_OK');
   for (const result of ['onClose', 'onError']) {
     test.showInterstitial(() => { completed++; test.playVoice(null, 'После рекламы'); });
     callbacks.onOpen();
+    windowEvents.pointerdown.forEach(fn => fn({ isTrusted: true, target: element('btnHome') }));
     assert.equal(test.canSound(), false);
     assert.equal(element('menuMusic').playing, false);
     callbacks[result]();
@@ -216,7 +222,7 @@ console.log('HOME_ICON_OK');
   context.window.speechSynthesis.pause = () => { speechPauses++; };
   const audio = [];
   context.Audio = class {
-    constructor() { this.currentTime = 7; audio.push(this); }
+    constructor(src) { this.src = src; this.currentTime = 7; audio.push(this); }
     addEventListener() {}
     play() { this.playing = true; return Promise.resolve(); }
     pause() { this.playing = false; }
@@ -281,6 +287,104 @@ console.log('HOME_ICON_OK');
   assert.equal(element('menuMusic').playing, true);
   assert.equal(element('menuMusic').currentTime, 12);
   console.log('WINDOW_SDK_AUDIO_PAUSE_OK');
+  // Реклама в рисовании, возврат в меню до запоздавшего SDK resume.
+  test.startWipe(false);
+  let staleWipeResult = 0;
+  context.window.azbukaWipeComplete({ char: 'А' }, () => { staleWipeResult++; });
+  callbacks.onOpen();
+  sdkEvents.game_api_pause();
+  callbacks.onClose();
+  element('btnHome').handlers.click();
+  test.startLetters(true);
+  test.renderActualLevel();
+  const pictureForNewSession = images.findLast(img => img.src === 'А.png');
+  pictureForNewSession.onload();
+  assert.equal(element('pic').child, pictureForNewSession);
+  windowEvents.pointerdown.forEach(fn => fn({ isTrusted: true, target: element('btnHome') }));
+  assert.equal(test.canSound(), true);
+  assert.equal(audio.at(-1).src, 'А.mp3');
+  assert.equal(audio.at(-1).playing, true);
+  assert.equal(staleWipeResult, 0, 'старое продолжение рисования не меняет новое занятие');
+  assert.equal(element('game').classList.contains('hidden'), false);
+  sdkEvents.game_api_resume();
+  assert.equal(staleWipeResult, 0);
+  // После рекламы в изучении и при нажатии шарика используются записи буквы.
+  test.correct(element('testCard'));
+  callbacks.onOpen();
+  sdkEvents.game_api_pause();
+  callbacks.onClose();
+  sdkEvents.game_api_resume();
+  assert.equal(element('pop').classList.contains('hidden'), false);
+  assert.equal(audio.at(-1).src, 'letter-А.mp3');
+  assert.equal(audio.at(-1).playing, true);
+  test.tapTarget();
+  assert.equal(audio.at(-1).src, 'letter-А.mp3');
+  assert.equal(audio.at(-1).playing, true);
+  console.log('AFTER_AD_MODE_SWITCH_BALLOONS_OK');
+  // Чтение после рекламы в каждом из двух других режимов.
+  for (const previousMode of ['wipe', 'letters']) {
+    element('btnHome').handlers.click();
+    if (previousMode === 'wipe') {
+      test.startWipe(false);
+      context.window.azbukaWipeComplete({ char: 'А' }, () => {});
+    } else {
+      test.startLetters(true);
+      test.correct(element('testCard'));
+    }
+    callbacks.onOpen();
+    sdkEvents.game_api_pause();
+    callbacks.onClose();
+    // SDK resume задержан: пользователь уже вернулся в меню и выбрал чтение.
+    element('btnHome').handlers.click();
+    test.startRead(true);
+    windowEvents.pointerdown.forEach(fn => fn({ isTrusted: true, target: element('btnHome') }));
+    assert.equal(element('read').classList.contains('hidden'), false);
+    assert.equal(element('pop').classList.contains('hidden'), true);
+    assert.equal(element('wipe').classList.contains('hidden'), true);
+    assert.equal(audio.at(-1).src, 'А.mp3', 'слово использует существующую запись уровня');
+    assert.equal(audio.at(-1).playing, true);
+    sdkEvents.game_api_resume();
+    assert.equal(element('read').classList.contains('hidden'), false, 'старый callback не переключает режим');
+    test.tapReadTarget();
+    assert.equal(audio.at(-1).src, 'letter-А.mp3');
+    assert.equal(audio.at(-1).playing, true);
+    element('readTiger').handlers.click();
+    assert.equal(audio.at(-1).src, 'А.mp3');
+    assert.equal(audio.at(-1).playing, true, 'повтор слова после рекламы');
+  }
+  // Для отдельной записи слова — приоритет перед записью предмета.
+  context.READ_WORDS[0].sound = 'word-a.mp3';
+  assert.equal(test.wordFile('А'), 'word-a.mp3');
+  delete context.READ_WORDS[0].sound;
+  // Нет файла: резервный речевой синтез тоже доступен после смены режима.
+  const wordAudio = [];
+  context.Audio = class {
+    constructor(src) { this.src = src; this.handlers = {}; wordAudio.push(this); }
+    addEventListener(type, fn) { this.handlers[type] = fn; }
+    play() { return Promise.resolve(); }
+    pause() {}
+  };
+  test.startRead(true);
+  wordAudio.at(-1).handlers.error();
+  assert.equal(spoken.at(-1), 'А');
+  sdkEvents.game_api_pause();
+  test.playVoice(null, 'Повтор слова');
+  const speechBeforeResume = spoken.length;
+  sdkEvents.game_api_resume();
+  assert.equal(spoken.length, speechBeforeResume + 1);
+  assert.equal(spoken.at(-1), 'Повтор слова');
+  console.log('READING_AFTER_AD_AUDIO_OK');
+  test.startWipe(false);
+  const wipeScene = element('wipe').contentWindow;
+  context.window.azbukaWipeStarted(wipeScene, { char: 'А' });
+  assert.equal(wordAudio.at(-1).src, 'assets/audio/wipe-start.mp3');
+  wordAudio.at(-1).handlers.error();
+  assert.equal(spoken.at(-1), 'Возьми полотенце и вытри букву А.');
+  const beforeStaleIntro = wordAudio.length;
+  element('btnHome').handlers.click();
+  context.window.azbukaWipeStarted(wipeScene, { char: 'Б' });
+  assert.equal(wordAudio.length, beforeStaleIntro, 'вступление не запускается после выхода в меню');
+  console.log('WIPE_INTRO_AUDIO_OK');
   delete context.window.YaGames;
   await test.initSdk();
   assert.equal(context.window.YANDEX_LANGUAGE, 'ru');
@@ -301,3 +405,15 @@ test.renderLetterPicture(picture);
 assert.ok(element('pic').innerHTML.includes('emoji'));
 assert.equal(element('letter').classList.contains('hidden'), false);
 console.log('PLACEHOLDERS_OPTION_OK');
+
+// Нет emoji при ожидании; при отсутствии файлов остаётся настоящая буква задания.
+context.window.GAME_SETTINGS.showPlaceholders = false;
+test.renderLetterPicture({ ...picture, image: 'not-present.png' });
+assert.equal(element('letter').classList.contains('hidden'), true);
+images.at(-1).onerror();
+assert.equal(images.at(-1).src, 'assets/img/cards/А.png');
+images.at(-1).onerror();
+assert.equal(element('letter').classList.contains('hidden'), false);
+assert.equal(element('letter').textContent, 'А');
+assert.equal(element('pic').innerHTML, '');
+console.log('MISSING_ART_LETTER_OK');

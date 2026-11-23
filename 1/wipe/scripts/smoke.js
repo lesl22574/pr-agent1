@@ -91,6 +91,12 @@ if (process.env.AD_BRIDGE) {
     adContinuation = done;
   } };
 }
+const startedLetters = [];
+window.parent = window.parent || {};
+window.parent.azbukaWipeStarted = function (scene, detail) {
+  if (scene !== window) throw new Error('источник вступления');
+  startedLetters.push(detail.char);
+};
 const gameSource = fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8');
 eval(gameSource.replace('function jingle() {', 'function jingle() { window.jingles = (window.jingles || 0) + 1;'));
 
@@ -140,13 +146,14 @@ const ev = (x, y) => ({ clientX: x, clientY: y, pointerId: 1, preventDefault() {
   frames(5);
   if (!get('cleanLetter').src.includes(process.env.RANDOM_ORDER ? 'v_clean' : 'b_clean')) throw new Error('следующая буква не загрузилась');
   const navigation = [];
-  window.parent = { azbukaWipe: (action) => navigation.push(action) };
+  window.parent.azbukaWipe = (action) => navigation.push(action);
   get('homeBtn').fire('click');
   get('nextBtn').fire('click');
   if (navigation.join(',') !== 'home,next') throw new Error('навигация общего меню');
   get('muteBtn').fire('click');
   get('againBtn').fire('click');
   frames(10);
+  if (startedLetters[0] !== 'А' || startedLetters.length < 3) throw new Error('вступление новой буквы и повтора');
   console.log('SMOKE_OK');
   process.exit(0);
 })().catch((e) => { console.error('SMOKE_FAIL:', e); process.exit(1); });

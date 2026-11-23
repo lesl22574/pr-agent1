@@ -39,6 +39,7 @@
   let adPause = false;     // пауза звука, пока открыта реклама
   let currentAudio = null;
   let currentFallback = '';
+  let currentUtterance = null;
   let pendingVoice = null;
   let sdkPaused = false;
   let windowInactive = false;
@@ -48,6 +49,7 @@
   let read = null;         // состояние текущего слова
   let readTimer = 0;
   let pictureRequest = 0;
+  let sceneSession = 0;
 
   // ---------- Масштабирование под окно ----------
   function fitStage() {
@@ -106,6 +108,7 @@
     pendingVoice = null;
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    currentUtterance = null;
   }
 
   function speak(text) {
@@ -117,6 +120,10 @@
     u.lang = 'ru-RU';
     u.rate = 0.9;
     u.pitch = 1.1;
+    // Сохраняем ссылку до окончания: WebView может преждевременно освободить
+    // локальный объект реплики после перехода между режимами.
+    currentUtterance = u;
+    u.onend = u.onerror = () => { if (currentUtterance === u) currentUtterance = null; };
     window.speechSynthesis.speak(u);
   }
 
@@ -137,8 +144,16 @@
     });
   }
 
-  const letterFile = (l) => `assets/audio/letters/${l}.mp3`;
-  const wordFile = (w) => `assets/audio/words/${w}.mp3`;
+  const letterFile = (letter) => {
+    const level = LEVELS.find((item) => item.letter === letter.toUpperCase());
+    return (level && (level.letterSound || level.sound)) || `assets/audio/letters/${letter.toUpperCase()}.mp3`;
+  };
+  const wordFile = (word) => {
+    const normalized = word.toLowerCase();
+    const entry = READ_WORDS.find((item) => item.word.toLowerCase() === normalized);
+    const level = LEVELS.find((item) => item.word.toLowerCase() === normalized);
+    return (entry && entry.sound) || (level && level.sound) || `assets/audio/words/${normalized}.mp3`;
+  };
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
   // ---------- Яндекс Игры SDK ----------
@@ -211,14 +226,22 @@
     } catch (e) { /* Сцена уже закрыта. */ }
   }
 
+  // Вступление запускается после готовности изображений каждой новой буквы.
+  window.azbukaWipeStarted = function (scene, detail) {
+    if (ui.wipe.classList.contains('hidden') || ui.wipe.contentWindow !== scene) return;
+    playVoice('assets/audio/wipe-start.mp3', `Возьми полотенце и вытри букву ${detail.char}.`);
+  };
+
   // Реклама запускается родителем: SDK един для всех режимов игры.
   window.azbukaWipeComplete = function (detail, afterAd) {
     if (ui.wipe.classList.contains('hidden')) return;
     const scene = ui.wipe.contentWindow;
     const source = ui.wipe.src;
+    const session = sceneSession;
+    stopSound();
     gameplayStop();
     showInterstitial(() => {
-      if (ui.wipe.classList.contains('hidden') || ui.wipe.contentWindow !== scene || ui.wipe.src !== source) return;
+      if (session !== sceneSession || ui.wipe.classList.contains('hidden') || ui.wipe.contentWindow !== scene || ui.wipe.src !== source) return;
       gameplayStart();
       afterAd();
       playVoice(letterFile(detail.char), `Буква ${detail.char}. Молодец!`);
@@ -236,8 +259,17 @@
       music.pause();
     }
   }
-  window.addEventListener('pointerdown', updateMenuMusic);
-  window.addEventListener('keydown', updateMenuMusic);
+  function restoreOnInteraction(event) {
+    if (!event || !event.isTrusted || document.hidden || adPause) return;
+    // Реальное нажатие внутри игры подтверждает возвращение из рекламного
+    // iframe, даже если WebView не прислал парное событие focus/resume.
+    if (!ui.stage.contains(event.target)) return;
+    windowInactive = false;
+    sdkPaused = false;
+    syncAudioState();
+  }
+  window.addEventListener('pointerdown', restoreOnInteraction, true);
+  window.addEventListener('keydown', restoreOnInteraction, true);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && typeof document.hasFocus === 'function') windowInactive = !document.hasFocus();
     syncAudioState();
@@ -267,6 +299,7 @@
   }
 
   function showStart() {
+    sceneSession++;
     ui.wipe.removeAttribute('src');
     wipeLesson = false;
     stopPop();
@@ -280,6 +313,7 @@
   }
 
   function startLetters(fromZero) {
+    sceneSession++;
     stopPop();
     stopRead();
     mode = 'letters';
@@ -293,8 +327,10 @@
   }
 
   function startRead(fromZero) {
+    sceneSession++;
     stopPop();
     stopRead();
+    stopSound();
     mode = 'read';
     if (fromZero) { wordIdx = 0; saveIdx(READ_KEY, 0); }
     else { wordIdx = loadIdx(READ_KEY, READ_WORDS.length); }
@@ -360,17 +396,28 @@
     ui.letter.textContent = lv.letter;
     ui.letter.classList.toggle('hidden', !placeholdersEnabled());
     ui.pic.innerHTML = placeholdersEnabled() ? `<span class="emoji">${lv.emoji}</span>` : '';
-    if (!lv.image) return;
-    const img = new Image();
-    img.alt = lv.word;
-    img.onload = () => {
-      // Поздняя загрузка предыдущей картинки не меняет текущий экран.
-      if (request !== pictureRequest) return;
-      ui.pic.innerHTML = '';
-      ui.pic.appendChild(img);
-      ui.letter.classList.add('hidden');
+    const showLetter = () => {
+      if (request === pictureRequest) ui.letter.classList.remove('hidden');
     };
-    img.src = lv.image;
+    const load = (url, fallback) => {
+      const img = new Image();
+      img.alt = lv.word;
+      img.onload = () => {
+        if (request !== pictureRequest) return;
+        ui.pic.innerHTML = '';
+        ui.pic.appendChild(img);
+        ui.letter.classList.add('hidden');
+      };
+      img.onerror = () => {
+        if (request !== pictureRequest) return;
+        if (fallback) load(fallback, null);
+        else showLetter();
+      };
+      img.src = url;
+    };
+    const card = `assets/img/cards/${lv.letter}.png`;
+    if (lv.image) load(lv.image, card);
+    else load(card, null);
   }
 
   // ---------- Картинки карточек (необязательно) ----------
@@ -445,7 +492,9 @@
 
     // межстраничная реклама сразу после правильного ответа,
     // потом закрепление — лопаем шарики с этой буквой
+    const session = sceneSession;
     showInterstitial(() => {
+      if (session !== sceneSession || ui.game.classList.contains('hidden')) return;
       gameplayStart();
       startPop();
     });
@@ -477,7 +526,7 @@
       done: false
     };
 
-    playVoice(null, `Лопай шарики с буквой ${lv.letter}`);
+    playVoice(letterFile(lv.letter), `Лопай шарики с буквой ${lv.letter}`);
     pop.raf = requestAnimationFrame(popFrame);
   }
 
@@ -545,7 +594,7 @@
       p.items = p.items.filter((i) => i !== b);
       b.ball.classList.add('pop');
       setTimeout(() => b.el.remove(), 260);
-      playVoice(null, b.letter);
+      playVoice(letterFile(b.letter), b.letter);
       if (p.popped >= p.needed) finishPop();
     } else {
       b.ball.classList.remove('wrong');
@@ -559,7 +608,6 @@
     const p = pop;
     p.done = true;
     cancelAnimationFrame(p.raf);
-    playVoice(null, 'Молодец!');
     setTimeout(() => {
       if (pop !== p) return; // игрок ушёл в меню
       stopPop();
@@ -717,6 +765,7 @@
 
   // ---------- Кнопки ----------
   function startWipe(lesson) {
+    sceneSession++;
     stopPop();
     stopRead();
     stopSound();

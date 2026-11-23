@@ -6,9 +6,10 @@
 //   word   — название предмета (используется в озвучке и подписи alt)
 //   emoji  — временная картинка (показывается, пока нет файла image)
 //   image  — файл картинки (замените на финальную графику)
+//   letterSound — необязательная отдельная запись буквы для шариков
 //   sound  — файл озвучки «Предмет. Буква ...» (если файла нет — используется синтез речи)
 window.LEVELS = [
-  { letter: 'А', word: 'ананас',    emoji: '🍉', image: 'assets/img/ananas.png',    sound: 'assets/audio/ananas_l.mp3' },
+  { letter: 'А', letterSound: 'assets/audio/a_l.mp3', word: 'ананас',    emoji: '🍉', image: 'assets/img/ananas.png',    sound: 'assets/audio/ananas_l.mp3' },
   { letter: 'Б', word: 'белка',    emoji: '🍌', image: 'assets/img/belka.png',    sound: 'assets/audio/belka_l.mp3' },
   { letter: 'В', word: 'волк', emoji: '🍇', image: 'assets/img/volk.png', sound: 'assets/audio/v1_l.mp3' },
   { letter: 'Г', word: 'гриб',     emoji: '🍄', image: 'assets/img/grib.png',     sound: 'assets/audio/x_l.mp3' },

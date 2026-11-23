@@ -199,6 +199,11 @@
       removeClass(towelWrap, 'drag');
       state.initialAlpha = Math.max(1, foamCoverage());
       cacheRects();
+      try {
+        if (window.parent && window.parent !== window && window.parent.azbukaWipeStarted) {
+          window.parent.azbukaWipeStarted(window, { char: L.char, index: i });
+        }
+      } catch (e) { /* Озвучка не должна останавливать запуск буквы. */ }
     };
     if (rec.ready) apply();
     else { rec.onReady = function () { if (state.idx === i) apply(); }; }
