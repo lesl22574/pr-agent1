@@ -38,6 +38,7 @@
   let pop = null;          // состояние закрепления
   let read = null;         // состояние текущего слова
   let readTimer = 0;
+  let pictureRequest = 0;
 
   // ---------- Масштабирование под окно ----------
   function fitStage() {
@@ -227,19 +228,7 @@
   function renderLevel() {
     const lv = LEVELS[levelIdx];
     showScreen(ui.game);
-    ui.count.textContent = $('treats').checked ? `Буква ${levelIdx + 1} из ${LEVELS.length}` : 'Буквы в случайном порядке';
-    ui.letter.textContent = lv.letter;
-
-    // картинка: сначала emoji-заглушка, потом файл (если он есть)
-    ui.pic.innerHTML = `<span class="emoji">${lv.emoji}</span>`;
-    const img = new Image();
-    img.alt = lv.word;
-    img.onload = () => {
-      if (LEVELS[levelIdx] !== lv) return;
-      ui.pic.innerHTML = '';
-      ui.pic.appendChild(img);
-    };
-    img.src = lv.image;
+    renderLetterPicture(lv);
 
     // карточки: правильная буква + 2 случайные другие
     const others = shuffle(LEVELS.map((l) => l.letter).filter((l) => l !== lv.letter)).slice(0, 2);
@@ -255,6 +244,24 @@
 
     // озвучка: предмет и буква
     playVoice(lv.sound, `${cap(lv.word)}. Буква ${lv.letter}.`);
+  }
+
+  function renderLetterPicture(lv) {
+    const request = ++pictureRequest;
+    ui.letter.textContent = lv.letter;
+    ui.letter.classList.remove('hidden');
+    ui.pic.innerHTML = `<span class="emoji">${lv.emoji}</span>`;
+    if (!lv.image) return;
+    const img = new Image();
+    img.alt = lv.word;
+    img.onload = () => {
+      // Поздняя загрузка предыдущей картинки не меняет текущий экран.
+      if (request !== pictureRequest) return;
+      ui.pic.innerHTML = '';
+      ui.pic.appendChild(img);
+      ui.letter.classList.add('hidden');
+    };
+    img.src = lv.image;
   }
 
   // ---------- Картинки карточек (необязательно) ----------

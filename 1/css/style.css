@@ -69,8 +69,8 @@ html, body {
   border: 6px solid #9a7430; border-bottom: none; border-radius: 10px 10px 0 0;
 }
 .pic {
-  position: absolute; left: 22px; top: 18px;
-  width: 300px; height: 220px;
+  position: absolute; left: 22px; right: 22px; top: 0;
+  width: unset; height: 100%;
   display: flex; align-items: center; justify-content: center;
 }
 .pic img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -276,3 +276,6 @@ html, body {
   -webkit-text-stroke: .6px #397a3a; text-shadow: 1px 2px 2px #738673; }
 .restart { position: absolute; left: 490px; top: 580px; }
 #wipe { width: 1280px; height: 720px; border: 0; z-index: 6; background: transparent; }
+
+/* Экран изучения: только задание, картинка и карточки. */
+#count, #btnSettings, #tiger { display: none !important; }

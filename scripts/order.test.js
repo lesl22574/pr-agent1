@@ -20,6 +20,7 @@ function element(id) {
       setAttribute(name, value) { this[name] = value; },
       removeAttribute(name) { delete this[name]; },
       querySelectorAll() { return []; },
+      appendChild(child) { this.child = child; },
     });
   }
   return elements.get(id);
@@ -28,7 +29,9 @@ const storage = new Map([['azbuka_progress_v1', '1']]);
 let random = 0;
 const math = Object.create(Math);
 math.random = () => random;
+const images = [];
 const context = vm.createContext({
+  Image: class { constructor() { images.push(this); } },
   document: { getElementById: element, addEventListener() {} },
   window: { addEventListener() {} },
   localStorage: { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) },
@@ -39,7 +42,7 @@ let source = fs.readFileSync(path.join(__dirname, '../1/js/game.js'), 'utf8');
 // Не запускаем Canvas/озвучку; тестируем реальные функции выбора и переходов.
 source = source.slice(0, source.indexOf('  // ---------- Старт ----------')) + `
   renderLevel = function () {};
-  window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex,
+  window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
     index: () => levelIdx };
 })();`;
 vm.runInContext(source, context);
@@ -108,3 +111,19 @@ assert.equal(element('bg').classList.contains('wiping'), false);
 assert.equal(element('bg').classList.contains('learning'), false);
 assert.equal(element('menuMusic').playing, true);
 console.log('BACKGROUND_MUSIC_OK');
+
+// Буква видна до загрузки картинки и при отсутствии файла.
+const picture = { letter: 'А', word: 'ананас', emoji: '🍍', image: 'a.png' };
+test.renderLetterPicture(picture);
+assert.equal(element('letter').classList.contains('hidden'), false);
+images.at(-1).onload();
+assert.equal(element('letter').classList.contains('hidden'), true);
+assert.equal(element('pic').child, images.at(-1));
+test.renderLetterPicture({ ...picture, letter: 'Б', image: 'missing.png' });
+assert.equal(element('letter').classList.contains('hidden'), false);
+const previousImage = images.at(-1);
+test.renderLetterPicture({ ...picture, letter: 'В', image: undefined });
+previousImage.onload();
+assert.equal(element('letter').textContent, 'В');
+assert.equal(element('letter').classList.contains('hidden'), false);
+console.log('LETTER_PICTURE_OK');
