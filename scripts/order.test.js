@@ -30,6 +30,7 @@ let random = 0;
 const math = Object.create(Math);
 math.random = () => random;
 const images = [];
+const timers = [];
 const context = vm.createContext({
   Image: class { constructor() { images.push(this); } },
   document: { getElementById: element, addEventListener() {} },
@@ -37,13 +38,15 @@ const context = vm.createContext({
   localStorage: { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) },
   LEVELS: ['А', 'Б', 'В', 'Г'].map(letter => ({ letter })),
   READ_WORDS: [], Math: math, clearTimeout() {},
+  cancelAnimationFrame() {}, setTimeout(fn) { timers.push(fn); },
 });
 let source = fs.readFileSync(path.join(__dirname, '../1/js/game.js'), 'utf8');
 // Не запускаем Canvas/озвучку; тестируем реальные функции выбора и переходов.
 source = source.slice(0, source.indexOf('  // ---------- Старт ----------')) + `
   renderLevel = function () {};
   window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
-    index: () => levelIdx };
+    index: () => levelIdx,
+    finishBalloons() { pop = { raf: 0 }; finishPop(); } };
 })();`;
 vm.runInContext(source, context);
 const test = context.window.test;
@@ -127,3 +130,28 @@ previousImage.onload();
 assert.equal(element('letter').textContent, 'В');
 assert.equal(element('letter').classList.contains('hidden'), false);
 console.log('LETTER_PICTURE_OK');
+
+// После шариков идёт следующая буква изучения, а не рисование.
+flag.checked = true;
+for (let index = 0; index < 3; index++) {
+  storage.set('azbuka_progress_v1', String(index));
+  test.startLetters(false);
+  test.finishBalloons();
+  assert.equal(timers.length, 1);
+  timers.shift()();
+  assert.equal(test.index(), index + 1);
+  assert.equal(element('game').classList.contains('hidden'), false);
+  assert.equal(element('wipe').classList.contains('hidden'), true);
+}
+assert.equal(element('menuMusic').volume, 0.5);
+console.log('BALLOONS_NEXT_LETTER_OK');
+
+const homeIcon = element('homeIcon');
+homeIcon.complete = true;
+homeIcon.naturalWidth = 128;
+homeIcon.handlers.load();
+assert.equal(element('btnHome').classList.contains('has-icon'), true);
+homeIcon.naturalWidth = 0;
+homeIcon.handlers.error();
+assert.equal(element('btnHome').classList.contains('has-icon'), false);
+console.log('HOME_ICON_OK');

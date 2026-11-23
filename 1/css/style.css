@@ -279,3 +279,10 @@ html, body {
 
 /* Экран изучения: только задание, картинка и карточки. */
 #count, #btnSettings, #tiger { display: none !important; }
+
+/* Готовый ассет кнопки возврата: 1/assets/img/btn-home.png. */
+#homeIcon { display: none; width: 100%; height: 100%; object-fit: contain; }
+#btnHome.has-icon { border: 0; padding: 0; background: transparent; box-shadow: none; }
+#btnHome.has-icon #homeIcon { display: block; }
+#btnHome.has-icon .homeFallback { display: none; }
+#btnHome:focus-visible { outline: 3px solid #216f1e; outline-offset: 3px; }

@@ -47,7 +47,10 @@
     <!-- ===== Кнопки и настройки (видны в игре) ===== -->
     <div id="hud" class="screen hidden">
       <button id="btnSettings" class="round tl" title="Настройки">⚙</button>
-      <button id="btnHome" class="round tr" title="В меню">⌂</button>
+      <button id="btnHome" class="round tr" title="В меню" aria-label="В меню">
+        <img id="homeIcon" src="assets/img/btn-home.png" alt="" draggable="false">
+        <span class="homeFallback" aria-hidden="true">⌂</span>
+      </button>
 
       <div id="settings" class="panel hidden">
         <h3>Настройки</h3>

@@ -328,3 +328,6 @@ html { background: #aee0f2 url('../assets/bg.png') center / cover no-repeat fixe
 html.embedded { background: transparent; }
 body { background: transparent; }
 #bg { display: none; }
+
+/* В рисовании кнопка звука скрыта. */
+#muteBtn { display: none !important; }

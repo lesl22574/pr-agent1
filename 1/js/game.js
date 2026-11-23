@@ -138,6 +138,7 @@
   // Музыка звучит только в открытом меню; отказ автозапуска не мешает игре.
   function updateMenuMusic() {
     const music = ui.menuMusic;
+    music.volume = 0.5;
     if (!ui.start.classList.contains('hidden') && canSound() && !document.hidden) {
       const attempt = music.play();
       if (attempt && attempt.catch) attempt.catch(() => {});
@@ -451,8 +452,7 @@
     setTimeout(() => {
       if (pop !== p) return; // игрок ушёл в меню
       stopPop();
-      if (['А', 'Б', 'В'].includes(LEVELS[levelIdx].letter)) startWipe(true);
-      else advanceLevel();
+      advanceLevel();
     }, 1600);
   }
 
@@ -649,6 +649,13 @@
     else startLetters(true);
   });
   ui.btnHome.addEventListener('click', () => showStart());
+  const homeIcon = $('homeIcon');
+  function updateHomeIcon() {
+    ui.btnHome.classList.toggle('has-icon', homeIcon.complete && homeIcon.naturalWidth > 0);
+  }
+  homeIcon.addEventListener('load', updateHomeIcon);
+  homeIcon.addEventListener('error', updateHomeIcon);
+  updateHomeIcon();
 
   ui.readTiger.addEventListener('click', () => {
     if (read) playVoice(wordFile(read.word.word), cap(read.word.word));
