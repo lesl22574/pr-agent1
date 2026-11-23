@@ -231,7 +231,19 @@ html, body {
 .card.skin.wrong { animation: shake 0.45s; }
 
 /* Общее меню: макет 2023-05-21_01-48-56. */
-@font-face { font-family: Frankc; src: url('../frankc.ttf') format('truetype'); font-display: swap; }
+@font-face {
+  font-family: 'Frankc';
+  src: url('../assets/fonts/frankc.woff2?v=2') format('woff2'),
+       url('../frankc.ttf?v=2') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+#start button, #start .treats, #start .treatsInfo {
+  font-family: 'Frankc', Arial, sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
 #bg { background: url('../assets/menu-bg.svg') center / 100% 100% no-repeat; }
 #start { display: block; background: transparent; }
 .candy {

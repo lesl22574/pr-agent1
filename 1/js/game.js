@@ -151,15 +151,16 @@
     stopSound();
     showScreen(ui.start);
     const p = loadIdx(SAVE_KEY, LEVELS.length);
-    $('btnLaunch').textContent = p > 0 && selectedMode === 'letters' ? 'Продолжить' : 'Играть';
-    ui.btnRestart.classList.toggle('hidden', p === 0);
+    $('btnLaunch').textContent = $('treats').checked && p > 0 && selectedMode === 'letters' ? 'Продолжить' : 'Играть';
+    ui.btnRestart.classList.toggle('hidden', !$('treats').checked || p === 0);
   }
 
   function startLetters(fromZero) {
     stopPop();
     stopRead();
     mode = 'letters';
-    if (fromZero) { levelIdx = 0; saveIdx(SAVE_KEY, 0); }
+    if (!$('treats').checked) levelIdx = randomLetterIndex(LEVELS.length);
+    else if (fromZero) { levelIdx = 0; saveIdx(SAVE_KEY, 0); }
     else { levelIdx = loadIdx(SAVE_KEY, LEVELS.length); }
     busy = false;
     showScreen(ui.game);
@@ -177,6 +178,14 @@
     showScreen(ui.read);
     gameplayStart();
     renderWord();
+  }
+
+  // Случайный выбор без повтора предыдущей буквы.
+  function randomLetterIndex(length, previous) {
+    if (length <= 1) return 0;
+    if (previous === undefined) return Math.floor(Math.random() * length);
+    const index = Math.floor(Math.random() * (length - 1));
+    return index >= previous ? index + 1 : index;
   }
 
   // ---------- Утилиты ----------
@@ -200,7 +209,7 @@
   function renderLevel() {
     const lv = LEVELS[levelIdx];
     showScreen(ui.game);
-    ui.count.textContent = `Буква ${levelIdx + 1} из ${LEVELS.length}`;
+    ui.count.textContent = $('treats').checked ? `Буква ${levelIdx + 1} из ${LEVELS.length}` : 'Буквы в случайном порядке';
     ui.letter.textContent = lv.letter;
 
     // картинка: сначала emoji-заглушка, потом файл (если он есть)
@@ -293,10 +302,6 @@
   function correct(btn) {
     busy = true;
     btn.classList.add('right');
-    if ($('treats').checked) {
-      ui.game.querySelector('.tiger').textContent = '🐯🍬';
-      setTimeout(() => { ui.game.querySelector('.tiger').textContent = '🐯'; }, 1500);
-    }
     ui.cards.querySelectorAll('.card').forEach((c) => { c.disabled = true; });
     playVoice(null, 'Молодец!');
     gameplayStop();
@@ -427,6 +432,13 @@
   }
 
   function advanceLevel() {
+    if (!$('treats').checked) {
+      levelIdx = randomLetterIndex(LEVELS.length, levelIdx);
+      showScreen(ui.game);
+      renderLevel();
+      busy = false;
+      return;
+    }
     levelIdx++;
     if (levelIdx >= LEVELS.length) {
       levelIdx = 0;
@@ -575,8 +587,8 @@
     wipeLesson = lesson;
     showScreen(ui.wipe);
     gameplayStart();
-    const letter = lesson ? LEVELS[levelIdx].letter : 'А';
-    ui.wipe.src = 'wipe/scene.html#' + encodeURIComponent(letter) + (soundOn ? '' : '&muted');
+    const letter = lesson ? LEVELS[levelIdx].letter : ['А', 'Б', 'В'][$('treats').checked ? 0 : randomLetterIndex(3)];
+    ui.wipe.src = 'wipe/scene.html#' + encodeURIComponent(letter) + ($('treats').checked ? '&ordered' : '&random') + (soundOn ? '' : '&muted');
   }
 
   // Прямой колбэк работает и при открытии единого index.html с диска.
@@ -587,7 +599,9 @@
       ui.wipe.removeAttribute('src');
       wipeLesson = false;
       advanceLevel();
+      return true;
     }
+    return false;
   };
   const choices = [[ui.btnPlay, 'letters'], [$('btnWipe'), 'wipe'], [ui.btnRead, 'read']];
   choices.forEach(([button, value]) => button.addEventListener('click', () => {
@@ -596,8 +610,9 @@
       item.classList.toggle('selected', key === value);
       item.setAttribute('aria-pressed', String(key === value));
     });
-    $('btnLaunch').textContent = value === 'letters' && loadIdx(SAVE_KEY, LEVELS.length) > 0 ? 'Продолжить' : 'Играть';
+    $('btnLaunch').textContent = $('treats').checked && value === 'letters' && loadIdx(SAVE_KEY, LEVELS.length) > 0 ? 'Продолжить' : 'Играть';
   }));
+  $('treats').addEventListener('change', showStart);
   $('btnLaunch').addEventListener('click', () => {
     if (selectedMode === 'wipe') startWipe(false);
     else if (selectedMode === 'read') startRead(false);
@@ -630,8 +645,8 @@
       saveIdx(READ_KEY, 0);
       renderWord();
     } else {
-      levelIdx = 0;
-      saveIdx(SAVE_KEY, 0);
+      levelIdx = $('treats').checked ? 0 : randomLetterIndex(LEVELS.length);
+      if ($('treats').checked) saveIdx(SAVE_KEY, 0);
       renderLevel();
     }
   });

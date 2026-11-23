@@ -446,8 +446,13 @@
   window.addEventListener('touchcancel', release);
 
   $('nextBtn').addEventListener('click', function () {
-    if (window.parent && window.parent !== window && window.parent.azbukaWipe) window.parent.azbukaWipe('next');
-    loadLetter((state.idx + 1) % window.LETTERS.length);
+    if (window.parent && window.parent !== window && window.parent.azbukaWipe && window.parent.azbukaWipe('next')) return;
+    var nextIndex = (state.idx + 1) % window.LETTERS.length;
+    if (launchHash.indexOf('&random') !== -1 && window.LETTERS.length > 1) {
+      nextIndex = Math.floor(Math.random() * (window.LETTERS.length - 1));
+      if (nextIndex >= state.idx) nextIndex++;
+    }
+    loadLetter(nextIndex);
   });
   $('againBtn').addEventListener('click', function () { loadLetter(state.idx); });
   $('homeBtn').addEventListener('click', function () {

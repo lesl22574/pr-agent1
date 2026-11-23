@@ -1,0 +1,80 @@
+// Проверка порядка букв и передачи настройки во встроенное занятие.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const elements = new Map();
+function element(id) {
+  if (!elements.has(id)) {
+    const classes = new Set();
+    elements.set(id, {
+      checked: false, style: {}, handlers: {},
+      classList: {
+        add: c => classes.add(c), remove: c => classes.delete(c),
+        contains: c => classes.has(c),
+        toggle(c, on) { if (on) classes.add(c); else classes.delete(c); },
+      },
+      addEventListener(type, fn) { this.handlers[type] = fn; },
+      setAttribute(name, value) { this[name] = value; },
+      removeAttribute(name) { delete this[name]; },
+      querySelectorAll() { return []; },
+    });
+  }
+  return elements.get(id);
+}
+const storage = new Map([['azbuka_progress_v1', '1']]);
+let random = 0;
+const math = Object.create(Math);
+math.random = () => random;
+const context = vm.createContext({
+  document: { getElementById: element },
+  window: { addEventListener() {} },
+  localStorage: { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) },
+  LEVELS: ['А', 'Б', 'В', 'Г'].map(letter => ({ letter })),
+  READ_WORDS: [], Math: math, clearTimeout() {},
+});
+let source = fs.readFileSync(path.join(__dirname, '../1/js/game.js'), 'utf8');
+// Не запускаем Canvas/озвучку; тестируем реальные функции выбора и переходов.
+source = source.slice(0, source.indexOf('  // ---------- Старт ----------')) + `
+  renderLevel = function () {};
+  window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex,
+    index: () => levelIdx };
+})();`;
+vm.runInContext(source, context);
+const test = context.window.test;
+const flag = element('treats');
+flag.checked = true;
+test.startLetters(false);
+assert.equal(test.index(), 1, 'продолжение последовательного прогресса');
+test.advanceLevel();
+assert.equal(test.index(), 2);
+assert.equal(storage.get('azbuka_progress_v1'), '2');
+test.startLetters(true);
+assert.equal(test.index(), 0);
+test.startWipe(false);
+assert.equal(element('wipe').src, 'wipe/scene.html#%D0%90&ordered');
+flag.checked = false;
+random = 0.99;
+test.startLetters(false);
+assert.equal(test.index(), 3, 'случайная стартовая буква');
+random = 0;
+test.advanceLevel();
+assert.equal(test.index(), 0, 'случайная следующая буква');
+assert.equal(storage.get('azbuka_progress_v1'), '0', 'случайная игра не меняет сохранение');
+for (let previous = 0; previous < 4; previous++) {
+  for (const value of [0, 0.25, 0.5, 0.99]) {
+    random = value;
+    const next = test.randomLetterIndex(4, previous);
+    assert.notEqual(next, previous);
+    assert.ok(next >= 0 && next < 4);
+  }
+}
+random = 0.99;
+test.startWipe(false);
+assert.equal(element('wipe').src, 'wipe/scene.html#%D0%92&random');
+test.startWipe(true);
+assert.equal(element('wipe').src, 'wipe/scene.html#%D0%90&random');
+assert.equal(context.window.azbukaWipe('next'), true);
+assert.equal(test.index(), 3, 'возврат из полотенца к случайной букве');
+assert.equal(element('wipe').src, undefined);
+console.log('ORDER_OK');

@@ -6,7 +6,8 @@
   <title>Азбука — изучение букв</title>
   <!-- SDK Яндекс Игр (GameReady) -->
   <script async src="https://yandex.ru/games/sdk/v2"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="preload" href="assets/fonts/frankc.woff2?v=2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
   <div id="stage">
@@ -59,7 +60,7 @@
     <div id="start" class="screen overlay">
       <button id="btnLaunch" class="candy launch">Играть</button>
       <label class="candy treats"><input id="treats" type="checkbox"> Вкусности</label>
-      <div id="treatsInfo" class="treatsInfo">В режиме вкусности тигрёнок получает угощение за верные ответы!</div>
+      <div id="treatsInfo" class="treatsInfo">Вкусности: буквы по порядку. Без галочки — случайные буквы.</div>
       <div class="modeMenu" role="group" aria-label="Выбор занятия">
         <button id="btnPlay" class="candy selected" aria-pressed="true">Изучение букв</button>
         <button id="btnWipe" class="candy" aria-pressed="false">Рисование букв</button>

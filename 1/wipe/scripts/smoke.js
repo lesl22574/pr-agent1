@@ -60,7 +60,7 @@ let Tnow = 0;
 const winH = {};
 global.window = {
   LETTERS: null,
-  location: { hash: '', href: '' },
+  location: { hash: process.env.RANDOM_ORDER ? '&random' : '&ordered', href: '' },
   requestAnimationFrame: (cb) => { rafQueue.push(cb); return rafQueue.length; },
   addEventListener: (t, f) => { (winH[t] = winH[t] || []).push(f); },
   dispatchEvent: (e) => { (winH[e.type] || []).forEach((f) => f(e)); return true; },
@@ -78,6 +78,8 @@ global.Image = class {
 };
 global.requestAnimationFrame = global.window.requestAnimationFrame;
 const winFire = (t, e) => (winH[t] || []).forEach((f) => f(e));
+
+if (process.env.RANDOM_ORDER) Math.random = () => 0.99;
 
 eval(fs.readFileSync(path.join(ROOT, 'js', 'letters.js'), 'utf8'));
 eval(fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8'));
@@ -118,7 +120,7 @@ const ev = (x, y) => ({ clientX: x, clientY: y, pointerId: 1, preventDefault() {
   if (get('winStars').children.length !== 3) throw new Error('звёзды не построены');
   get('nextBtn').fire('click');
   frames(5);
-  if (!get('cleanLetter').src.includes('b_clean')) throw new Error('следующая буква не загрузилась');
+  if (!get('cleanLetter').src.includes(process.env.RANDOM_ORDER ? 'v_clean' : 'b_clean')) throw new Error('следующая буква не загрузилась');
   const navigation = [];
   window.parent = { azbukaWipe: (action) => navigation.push(action) };
   get('homeBtn').fire('click');
