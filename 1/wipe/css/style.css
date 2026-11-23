@@ -321,3 +321,10 @@ html, body {
 #winButtons button:hover { transform: translateY(-2px); }
 #winButtons button:active { transform: translateY(2px); box-shadow: 0 1px 0 #2fa843; }
 #againBtn { background: #8fd45f; box-shadow: 0 4px 0 #6cae3d; }
+
+/* Встроенная сцена пропускает общий полноэкранный фон родительской игры.
+   При отдельном открытии фон также заполняет окно с обрезкой краёв. */
+html { background: #aee0f2 url('../assets/bg.png') center / cover no-repeat fixed; }
+html.embedded { background: transparent; }
+body { background: transparent; }
+#bg { display: none; }

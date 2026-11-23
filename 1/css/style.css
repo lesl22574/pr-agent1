@@ -16,12 +16,16 @@ html, body {
   transform-origin: center center;
 }
 
-/* ---- Фон (placeholder: положите assets/img/bg.jpg) ---- */
+/* Фон независим от масштаба игрового поля и заполняет весь экран. */
 #bg {
-  position: absolute; inset: 0;
-  background:
-    url('../assets/img/bg.jpg') center / cover no-repeat,
-    linear-gradient(180deg, #9ddcf5 0%, #f5c6e6 45%, #b9ea8a 60%, #7fd36a 100%);
+  position: fixed; inset: 0; pointer-events: none;
+  background: #bfe7ed url('../assets/menu-bg.svg') center / cover no-repeat;
+}
+#bg.learning {
+  background-image: url('../assets/img/51.jpg'), url('../assets/menu-bg.svg');
+}
+#bg.wiping {
+  background-image: url('../wipe/assets/bg.png');
 }
 
 .screen { position: absolute; inset: 0; }
@@ -244,7 +248,7 @@ html, body {
   font-weight: 400;
   font-style: normal;
 }
-#bg { background: url('../assets/menu-bg.svg') center / 100% 100% no-repeat; }
+
 #start { display: block; background: transparent; }
 .candy {
   position: absolute; width: 300px; height: 86px; padding: 18px 28px;
@@ -271,4 +275,4 @@ html, body {
   font: 25px/1.08 Frankc, Arial, sans-serif; text-transform: uppercase; color: #16d82d;
   -webkit-text-stroke: .6px #397a3a; text-shadow: 1px 2px 2px #738673; }
 .restart { position: absolute; left: 490px; top: 580px; }
-#wipe { width: 1280px; height: 720px; border: 0; z-index: 6; background: #e8f5df; }
+#wipe { width: 1280px; height: 720px; border: 0; z-index: 6; background: transparent; }

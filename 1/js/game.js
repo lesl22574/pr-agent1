@@ -13,7 +13,7 @@
 
   const $ = (id) => document.getElementById(id);
   const ui = {
-    stage: $('stage'),
+    stage: $('stage'), bg: $('bg'), menuMusic: $('menuMusic'),
     game: $('game'), pop: $('pop'), read: $('read'), hud: $('hud'),
     start: $('start'), end: $('end'), wipe: $('wipe'),
     count: $('count'), pic: $('pic'), letter: $('letter'), cards: $('cards'),
@@ -134,9 +134,26 @@
     }
   }
 
+  // Музыка звучит только в открытом меню; отказ автозапуска не мешает игре.
+  function updateMenuMusic() {
+    const music = ui.menuMusic;
+    if (!ui.start.classList.contains('hidden') && canSound() && !document.hidden) {
+      const attempt = music.play();
+      if (attempt && attempt.catch) attempt.catch(() => {});
+    } else {
+      music.pause();
+    }
+  }
+  window.addEventListener('pointerdown', updateMenuMusic);
+  window.addEventListener('keydown', updateMenuMusic);
+  document.addEventListener('visibilitychange', updateMenuMusic);
+
   // ---------- Экраны ----------
   function showScreen(screen) {
     [ui.game, ui.pop, ui.read, ui.start, ui.end, ui.wipe].forEach((el) => el.classList.toggle('hidden', el !== screen));
+    ui.bg.classList.toggle('learning', screen === ui.game || screen === ui.pop || screen === ui.read || (screen === ui.end && mode !== 'wipe'));
+    ui.bg.classList.toggle('wiping', screen === ui.wipe);
+    updateMenuMusic();
     const inGame = (screen === ui.game || screen === ui.pop || screen === ui.read || screen === ui.wipe);
     ui.hud.classList.toggle('hidden', !inGame);
     ui.btnSettings.classList.toggle('hidden', screen === ui.wipe);

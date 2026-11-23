@@ -9,6 +9,8 @@ function element(id) {
     const classes = new Set();
     elements.set(id, {
       checked: false, style: {}, handlers: {},
+      play() { this.playing = true; return Promise.resolve(); },
+      pause() { this.playing = false; },
       classList: {
         add: c => classes.add(c), remove: c => classes.delete(c),
         contains: c => classes.has(c),
@@ -27,7 +29,7 @@ let random = 0;
 const math = Object.create(Math);
 math.random = () => random;
 const context = vm.createContext({
-  document: { getElementById: element },
+  document: { getElementById: element, addEventListener() {} },
   window: { addEventListener() {} },
   localStorage: { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) },
   LEVELS: ['А', 'Б', 'В', 'Г'].map(letter => ({ letter })),
@@ -93,3 +95,16 @@ for (const lesson of [false, true]) {
   assert.equal(storage.get('azbuka_progress_v1'), savedProgress);
 }
 console.log('WIPE_HOME_OK');
+
+// Полноэкранный фон меняется независимо от масштаба игрового поля.
+test.startLetters(true);
+assert.equal(element('bg').classList.contains('learning'), true);
+assert.equal(element('menuMusic').playing, false);
+test.startWipe(false);
+assert.equal(element('bg').classList.contains('wiping'), true);
+assert.equal(element('bg').classList.contains('learning'), false);
+element('btnHome').handlers.click();
+assert.equal(element('bg').classList.contains('wiping'), false);
+assert.equal(element('bg').classList.contains('learning'), false);
+assert.equal(element('menuMusic').playing, true);
+console.log('BACKGROUND_MUSIC_OK');
