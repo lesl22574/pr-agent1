@@ -60,6 +60,7 @@ let Tnow = 0;
 const winH = {};
 global.window = {
   LETTERS: null,
+  location: { hash: '', href: '' },
   requestAnimationFrame: (cb) => { rafQueue.push(cb); return rafQueue.length; },
   addEventListener: (t, f) => { (winH[t] = winH[t] || []).push(f); },
   dispatchEvent: (e) => { (winH[e.type] || []).forEach((f) => f(e)); return true; },
@@ -118,7 +119,11 @@ const ev = (x, y) => ({ clientX: x, clientY: y, pointerId: 1, preventDefault() {
   get('nextBtn').fire('click');
   frames(5);
   if (!get('cleanLetter').src.includes('b_clean')) throw new Error('следующая буква не загрузилась');
+  const navigation = [];
+  window.parent = { azbukaWipe: (action) => navigation.push(action) };
   get('homeBtn').fire('click');
+  get('nextBtn').fire('click');
+  if (navigation.join(',') !== 'home,next') throw new Error('навигация общего меню');
   get('muteBtn').fire('click');
   get('againBtn').fire('click');
   frames(10);

@@ -138,7 +138,13 @@
     for (var i = 0; i < window.LETTERS.length; i++) {
       (function (L) {
         var rec = { foam: new Image(), clean: new Image(), ready: false, left: 2 };
-        var done = function () { rec.left -= 1; if (rec.left === 0) rec.ready = true; };
+        var done = function () {
+          rec.left -= 1;
+          if (rec.left === 0) {
+            rec.ready = true;
+            if (rec.onReady) rec.onReady();
+          }
+        };
         rec.foam.onload = done;
         rec.clean.onload = done;
         rec.foam.src = L.foam;
@@ -184,7 +190,7 @@
       cacheRects();
     };
     if (rec.ready) apply();
-    else { rec.foam.onload = rec.clean.onload = function () { rec.ready = true; apply(); }; }
+    else { rec.onReady = function () { if (state.idx === i) apply(); }; }
   }
 
   /* ---------- звук (WebAudio с защитой для старых браузеров) ---------- */
@@ -439,9 +445,15 @@
   window.addEventListener('touchend', release);
   window.addEventListener('touchcancel', release);
 
-  $('nextBtn').addEventListener('click', function () { loadLetter((state.idx + 1) % window.LETTERS.length); });
+  $('nextBtn').addEventListener('click', function () {
+    if (window.parent && window.parent !== window && window.parent.azbukaWipe) window.parent.azbukaWipe('next');
+    loadLetter((state.idx + 1) % window.LETTERS.length);
+  });
   $('againBtn').addEventListener('click', function () { loadLetter(state.idx); });
-  $('homeBtn').addEventListener('click', function () { loadLetter(0); });
+  $('homeBtn').addEventListener('click', function () {
+    if (window.parent && window.parent !== window && window.parent.azbukaWipe) window.parent.azbukaWipe('home');
+    else window.location.href = '../index.html';
+  });
   $('muteBtn').addEventListener('click', function () {
     state.muted = !state.muted;
     if (master) master.gain.value = state.muted ? 0 : 0.9;
@@ -537,7 +549,15 @@
     window.mozRequestAnimationFrame ||
     null;
   fit();
-  loadLetter(0);
+  var launchHash = (window.location && window.location.hash) || '';
+  var requestedChar = '';
+  try { requestedChar = decodeURIComponent(launchHash.slice(1).split('&')[0]); } catch (e) {}
+  var initialIndex = 0;
+  for (var li = 0; li < window.LETTERS.length; li++) {
+    if (window.LETTERS[li].char === requestedChar) initialIndex = li;
+  }
+  if (launchHash.indexOf('&muted') !== -1) $('muteBtn').click();
+  loadLetter(initialIndex);
   // цикл живёт и на rAF, и на таймере: если rAF в окружении останавливается
   // (скрытая вкладка, ограниченный WebView), игра всё равно работает;
   // каждый драйвер перепланирует себя сам, дубли гасит защита в loop()

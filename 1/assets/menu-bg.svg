@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="725" viewBox="0 0 1440 725">
+<path fill="#bfe7ed" d="M0 0h1440v725H0z"/>
+<path fill="#d2f0f3" d="M0 120Q230 85 445 128T880 128T1440 125V725H0Z"/>
+<path fill="#e1f5f6" d="M0 192Q205 146 416 189T892 177T1440 191V725H0Z"/>
+<path fill="#fff" d="M0 264Q130 220 161 171T454 191T871 194T1197 184T1440 236V725H0Z"/>
+<path fill="#fffec6" d="M0 305Q186 179 383 247T758 261T1107 234T1440 285V725H0Z"/>
+<path fill="#fff2a3" d="M0 330Q195 245 402 307T793 307T1170 290T1440 313V725H0Z"/>
+<path fill="#fff5b7" d="M0 448Q267 420 490 450T932 439T1440 433V725H0Z"/>
+<path fill="#dfebbd" d="M0 575L115 539 247 587 432 496 563 588 715 518 846 591 1018 505 1163 574 1324 477 1440 557V725H0Z"/>
+<g fill="none" stroke="#a0b58b" stroke-width="9"><path d="M240 636l-7-102-20-25m22 40 27-31M1003 623l-13-158 31-61m-29 84-28-26m34 65 27-39M771 658l-4-116-18-24m20 44 23-36"/></g>
+<path fill="#b0c795" d="M0 646L117 579 229 625 403 577 560 642 715 582 870 638 1027 575 1151 636 1327 558 1440 612V725H0Z"/>
+<path fill="#80a980" d="M0 673L115 606 245 656 389 599 534 668 715 611 857 674 1026 612 1161 676 1329 594 1440 649V725H0Z"/>
+<defs><pattern id="grass" width="132" height="125" patternUnits="userSpaceOnUse"><g fill="none" stroke="#bed271" stroke-width="5"><path d="M65 125L44 24m19 90L23 80m37 14L27 58m29 12L29 39m35 72 33-40m-38 20 28-37m-33 15 22-33M109 125l9-66m-8 46-15-24m18 10 17-20"/></g></pattern></defs>
+<path fill="url(#grass)" d="M0 570h1440v155H0z"/>
+<path fill="#526d32" stroke="#c8da8b" stroke-width="5" d="M0 696h1440v29H0z"/>
+<path fill="none" stroke="#829744" stroke-width="10" stroke-dasharray="17 5" d="M0 705h1440"/>
+</svg>

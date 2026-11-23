@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Азбука — изучение букв</title>
   <!-- SDK Яндекс Игр (GameReady) -->
-  <script src="https://yandex.ru/games/sdk/v2"></script>
+  <script async src="https://yandex.ru/games/sdk/v2"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -57,15 +57,18 @@
 
     <!-- ===== Стартовый экран ===== -->
     <div id="start" class="screen overlay">
-      <div class="title">Азбука</div>
-      <div class="subtitle">Учим буквы вместе!</div>
-      <div class="tigerBig">🐯</div>
-      <div class="menu">
-        <button id="btnPlay" class="btn big">Изучение букв</button>
-        <button id="btnRead" class="btn big">Чтение</button>
-        <button id="btnRestart" class="btn hidden">Буквы: начать сначала</button>
+      <button id="btnLaunch" class="candy launch">Играть</button>
+      <label class="candy treats"><input id="treats" type="checkbox"> Вкусности</label>
+      <div id="treatsInfo" class="treatsInfo">В режиме вкусности тигрёнок получает угощение за верные ответы!</div>
+      <div class="modeMenu" role="group" aria-label="Выбор занятия">
+        <button id="btnPlay" class="candy selected" aria-pressed="true">Изучение букв</button>
+        <button id="btnWipe" class="candy" aria-pressed="false">Рисование букв</button>
+        <button id="btnRead" class="candy" aria-pressed="false">Чтение</button>
       </div>
+      <button id="btnRestart" class="btn small restart hidden">Буквы: начать сначала</button>
     </div>
+
+    <iframe id="wipe" class="screen hidden" title="Вытри букву полотенцем"></iframe>
 
     <!-- ===== Финальный экран ===== -->
     <div id="end" class="screen overlay hidden">

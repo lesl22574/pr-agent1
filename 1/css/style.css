@@ -229,3 +229,34 @@ html, body {
 .card.skin.full { color: transparent; }  /* буква уже на картинке */
 .card.skin.right { box-shadow: 0 0 0 8px #2fb31a; border-radius: 14px; }
 .card.skin.wrong { animation: shake 0.45s; }
+
+/* Общее меню: макет 2023-05-21_01-48-56. */
+@font-face { font-family: Frankc; src: url('../frankc.ttf') format('truetype'); font-display: swap; }
+#bg { background: url('../assets/menu-bg.svg') center / 100% 100% no-repeat; }
+#start { display: block; background: transparent; }
+.candy {
+  position: absolute; width: 300px; height: 86px; padding: 18px 28px;
+  border: 0; background: url('../candybutt1 (7)  (1) (2).png') center / 100% 100% no-repeat;
+  font: 27px Frankc, Arial, sans-serif; text-transform: uppercase;
+  color: #00dc13; -webkit-text-stroke: 1px #164a0c;
+  text-shadow: 1px 2px 1px #255b17; cursor: pointer; isolation: isolate;
+}
+.candy::before {
+  content: ''; position: absolute; inset: 15% 12%; border: 1px solid #737373;
+  border-radius: 6px; background: #f4f4f4; z-index: -1;
+}
+.candy.selected::before { background: #fff200; }
+.candy:hover { filter: brightness(1.06); }
+.candy:active { transform: translateY(2px); }
+.candy:focus-visible { outline: 3px solid #216f1e; outline-offset: 2px; }
+.launch { left: 490px; top: 165px; height: 120px; font-size: 36px; }
+.modeMenu { position: absolute; left: 810px; top: 223px; width: 300px; }
+.modeMenu .candy { position: relative; display: block; margin-bottom: 4px; }
+.treats { left: 170px; top: 313px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.treats input { width: 29px; height: 29px; accent-color: #35dc17; cursor: pointer; }
+.treatsInfo { position: absolute; left: 167px; top: 425px; width: 302px; min-height: 120px;
+  border: 1px solid #707070; border-radius: 6px; padding: 8px 20px; background: #f4f4f4;
+  font: 25px/1.08 Frankc, Arial, sans-serif; text-transform: uppercase; color: #16d82d;
+  -webkit-text-stroke: .6px #397a3a; text-shadow: 1px 2px 2px #738673; }
+.restart { position: absolute; left: 490px; top: 580px; }
+#wipe { width: 1280px; height: 720px; border: 0; z-index: 6; background: #e8f5df; }

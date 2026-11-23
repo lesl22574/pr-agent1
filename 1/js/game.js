@@ -15,7 +15,7 @@
   const ui = {
     stage: $('stage'),
     game: $('game'), pop: $('pop'), read: $('read'), hud: $('hud'),
-    start: $('start'), end: $('end'),
+    start: $('start'), end: $('end'), wipe: $('wipe'),
     count: $('count'), pic: $('pic'), letter: $('letter'), cards: $('cards'),
     popTarget: $('popTarget'),
     readCount: $('readCount'), readLayer: $('readLayer'), readTiger: $('readTiger'),
@@ -25,6 +25,8 @@
     btnRestart: $('btnRestart'), btnEndAgain: $('btnEndAgain'), endSub: $('endSub')
   };
 
+  let selectedMode = 'letters';
+  let wipeLesson = false;
   let ysdk = null;
   let mode = 'letters';    // 'letters' | 'read'
   let levelIdx = 0;        // текущая буква (режим 1)
@@ -46,7 +48,8 @@
 
   // ---------- Прогресс ----------
   function loadIdx(key, len) {
-    const v = parseInt(localStorage.getItem(key), 10);
+    let v;
+    try { v = parseInt(localStorage.getItem(key), 10); } catch (e) { return 0; }
     return (Number.isInteger(v) && v >= 0 && v < len) ? v : 0;
   }
   function saveIdx(key, v) {
@@ -133,20 +136,22 @@
 
   // ---------- Экраны ----------
   function showScreen(screen) {
-    [ui.game, ui.pop, ui.read, ui.start, ui.end].forEach((el) => el.classList.toggle('hidden', el !== screen));
+    [ui.game, ui.pop, ui.read, ui.start, ui.end, ui.wipe].forEach((el) => el.classList.toggle('hidden', el !== screen));
     const inGame = (screen === ui.game || screen === ui.pop || screen === ui.read);
     ui.hud.classList.toggle('hidden', !inGame);
     if (!inGame) ui.settings.classList.add('hidden');
   }
 
   function showStart() {
+    ui.wipe.removeAttribute('src');
+    wipeLesson = false;
     stopPop();
     stopRead();
     gameplayStop();
     stopSound();
     showScreen(ui.start);
     const p = loadIdx(SAVE_KEY, LEVELS.length);
-    ui.btnPlay.textContent = p > 0 ? 'Продолжить' : 'Изучение букв';
+    $('btnLaunch').textContent = p > 0 && selectedMode === 'letters' ? 'Продолжить' : 'Играть';
     ui.btnRestart.classList.toggle('hidden', p === 0);
   }
 
@@ -288,6 +293,10 @@
   function correct(btn) {
     busy = true;
     btn.classList.add('right');
+    if ($('treats').checked) {
+      ui.game.querySelector('.tiger').textContent = '🐯🍬';
+      setTimeout(() => { ui.game.querySelector('.tiger').textContent = '🐯'; }, 1500);
+    }
     ui.cards.querySelectorAll('.card').forEach((c) => { c.disabled = true; });
     playVoice(null, 'Молодец!');
     gameplayStop();
@@ -412,7 +421,8 @@
     setTimeout(() => {
       if (pop !== p) return; // игрок ушёл в меню
       stopPop();
-      advanceLevel();
+      if (['А', 'Б', 'В'].includes(LEVELS[levelIdx].letter)) startWipe(true);
+      else advanceLevel();
     }, 1600);
   }
 
@@ -428,6 +438,7 @@
       return;
     }
     saveIdx(SAVE_KEY, levelIdx);
+    showScreen(ui.game);
     renderLevel();
     busy = false;
   }
@@ -557,8 +568,41 @@
   }
 
   // ---------- Кнопки ----------
-  ui.btnPlay.addEventListener('click', () => startLetters(false));
-  ui.btnRead.addEventListener('click', () => startRead(false));
+  function startWipe(lesson) {
+    stopPop();
+    stopRead();
+    stopSound();
+    wipeLesson = lesson;
+    showScreen(ui.wipe);
+    gameplayStart();
+    const letter = lesson ? LEVELS[levelIdx].letter : 'А';
+    ui.wipe.src = 'wipe/scene.html#' + encodeURIComponent(letter) + (soundOn ? '' : '&muted');
+  }
+
+  // Прямой колбэк работает и при открытии единого index.html с диска.
+  window.azbukaWipe = function (action) {
+    if (ui.wipe.classList.contains('hidden')) return;
+    if (action === 'home') showStart();
+    else if (action === 'next' && wipeLesson) {
+      ui.wipe.removeAttribute('src');
+      wipeLesson = false;
+      advanceLevel();
+    }
+  };
+  const choices = [[ui.btnPlay, 'letters'], [$('btnWipe'), 'wipe'], [ui.btnRead, 'read']];
+  choices.forEach(([button, value]) => button.addEventListener('click', () => {
+    selectedMode = value;
+    choices.forEach(([item, key]) => {
+      item.classList.toggle('selected', key === value);
+      item.setAttribute('aria-pressed', String(key === value));
+    });
+    $('btnLaunch').textContent = value === 'letters' && loadIdx(SAVE_KEY, LEVELS.length) > 0 ? 'Продолжить' : 'Играть';
+  }));
+  $('btnLaunch').addEventListener('click', () => {
+    if (selectedMode === 'wipe') startWipe(false);
+    else if (selectedMode === 'read') startRead(false);
+    else startLetters(false);
+  });
   ui.btnRestart.addEventListener('click', () => startLetters(true));
   ui.btnEndAgain.addEventListener('click', () => {
     if (mode === 'read') startRead(true);
