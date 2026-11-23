@@ -82,7 +82,18 @@ const winFire = (t, e) => (winH[t] || []).forEach((f) => f(e));
 if (process.env.RANDOM_ORDER) Math.random = () => 0.99;
 
 eval(fs.readFileSync(path.join(ROOT, 'js', 'letters.js'), 'utf8'));
-eval(fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8'));
+let adContinuation;
+let adCalls = 0;
+if (process.env.AD_BRIDGE) {
+  window.parent = { azbukaWipeComplete(detail, done) {
+    if (detail.char !== 'А') throw new Error('буква для рекламы');
+    adCalls++;
+    adContinuation = done;
+  } };
+}
+const gameSource = fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8');
+eval(gameSource.replace('function jingle() {', 'function jingle() { window.jingles = (window.jingles || 0) + 1;'));
+
 global.window.onLetterCleaned = (d) => cleaned.push(['cb', d]);
 
 let T = 0;
@@ -113,6 +124,13 @@ const ev = (x, y) => ({ clientX: x, clientY: y, pointerId: 1, preventDefault() {
   if (cleaned.length !== 2) throw new Error('событие letter:cleaned и колбэк не вызваны');
   if (cleaned[0].char !== 'А' || typeof cleaned[0].stars !== 'number') throw new Error('detail события некорректен');
   if (cleaned[1][0] !== 'cb' || cleaned[1][1].char !== 'А') throw new Error('onLetterCleaned не вызван');
+  if (process.env.AD_BRIDGE) {
+    if (adCalls !== 1 || window.jingles) throw new Error('звук до рекламы');
+    if (!has('winOverlay', 'hidden')) throw new Error('результат до рекламы');
+    adContinuation();
+    adContinuation();
+    if (window.jingles !== 1) throw new Error('звук после рекламы должен быть однократным');
+  }
   winFire('mouseup', ev(600, 300));
   frames(10);
   await new Promise((r) => setTimeout(r, 800));  // победный оверлей через 700 мс

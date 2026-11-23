@@ -286,3 +286,6 @@ html, body {
 #btnHome.has-icon #homeIcon { display: block; }
 #btnHome.has-icon .homeFallback { display: none; }
 #btnHome:focus-visible { outline: 3px solid #216f1e; outline-offset: 3px; }
+
+/* При отключённых заглушках карточка появляется после проверки ассета. */
+.card.asset-loading { visibility: hidden; pointer-events: none; }

@@ -28,6 +28,9 @@
   let selectedMode = 'letters';
   let wipeLesson = false;
   let ysdk = null;
+  // Игра одноязычная: язык SDK читается, интерфейс и озвучка — русские.
+  window.GAME_LANGUAGE = 'ru';
+  window.YANDEX_LANGUAGE = 'ru';
   let mode = 'letters';    // 'letters' | 'read'
   let levelIdx = 0;        // текущая буква (режим 1)
   let wordIdx = 0;         // текущее слово (режим 2)
@@ -35,6 +38,12 @@
   let soundOn = true;      // настройка игрока
   let adPause = false;     // пауза звука, пока открыта реклама
   let currentAudio = null;
+  let currentFallback = '';
+  let pendingVoice = null;
+  let sdkPaused = false;
+  let windowInactive = false;
+  let audioPaused = false;
+  const deferredAdDone = [];
   let pop = null;          // состояние закрепления
   let read = null;         // состояние текущего слова
   let readTimer = 0;
@@ -58,34 +67,74 @@
   }
 
   // ---------- Звук ----------
-  function canSound() { return soundOn && !adPause; }
+  function backgroundPaused() { return sdkPaused || windowInactive || !!document.hidden; }
+  function canSound() { return soundOn && !adPause && !backgroundPaused(); }
+
+  function syncAudioState() {
+    const paused = !canSound();
+    if (paused) {
+      if (currentAudio) currentAudio.pause();
+      if (window.speechSynthesis && window.speechSynthesis.pause) window.speechSynthesis.pause();
+    } else if (audioPaused) {
+      if (window.speechSynthesis) window.speechSynthesis.resume();
+      if (currentAudio && !currentAudio.ended && !pendingVoice) {
+        const audio = currentAudio;
+        const attempt = audio.play();
+        if (attempt && attempt.catch) attempt.catch(() => {
+          if (currentAudio === audio && canSound()) {
+            currentAudio = null;
+            speak(currentFallback);
+          }
+        });
+      }
+    }
+    audioPaused = paused;
+    setWipeAdPaused(paused);
+    updateMenuMusic();
+    if (!paused && pendingVoice) {
+      const voice = pendingVoice;
+      pendingVoice = null;
+      playVoice(voice.file, voice.text);
+    }
+    // Результат рекламы продолжается лишь после возврата активности окна/SDK.
+    if (!adPause && !backgroundPaused()) {
+      while (deferredAdDone.length && !adPause && !backgroundPaused()) deferredAdDone.shift()();
+    }
+  }
 
   function stopSound() {
+    pendingVoice = null;
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }
 
   function speak(text) {
-    if (!canSound() || !('speechSynthesis' in window)) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    if (!canSound()) { if (soundOn) pendingVoice = { file: null, text }; return; }
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+    const u = new window.SpeechSynthesisUtterance(text);
     u.lang = 'ru-RU';
     u.rate = 0.9;
     u.pitch = 1.1;
-    speechSynthesis.speak(u);
+    window.speechSynthesis.speak(u);
   }
 
   // Проигрывает файл; если файла нет — синтез речи с текстом fallbackText
   function playVoice(file, fallbackText) {
     stopSound();
-    if (!canSound()) return;
+    if (!canSound()) { if (soundOn) pendingVoice = { file, text: fallbackText }; return; }
     if (!file) { speak(fallbackText); return; }
     const a = new Audio(file);
     currentAudio = a;
+    currentFallback = fallbackText;
     a.addEventListener('error', () => {
       if (currentAudio === a) { currentAudio = null; speak(fallbackText); }
     });
-    a.play().catch(() => { /* файл не найден — обработает событие error */ });
+    a.play().catch(() => {
+      // После рекламной паузы play() может отклониться без события error.
+      if (currentAudio === a && canSound()) { currentAudio = null; speak(fallbackText); }
+    });
   }
 
   const letterFile = (l) => `assets/audio/letters/${l}.mp3`;
@@ -95,10 +144,23 @@
   // ---------- Яндекс Игры SDK ----------
   function initSdk() {
     const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 4000));
-    const init = (window.YaGames && YaGames.init)
-      ? YaGames.init().then((s) => s).catch(() => null)
-      : Promise.resolve(null);
-    return Promise.race([init, timeout]).then((s) => { ysdk = s; });
+    const init = Promise.resolve().then(() => {
+      return window.YaGames && window.YaGames.init ? window.YaGames.init() : null;
+    }).then((sdk) => {
+      ysdk = sdk;
+      const language = sdk && sdk.environment && sdk.environment.i18n && sdk.environment.i18n.lang;
+      window.YANDEX_LANGUAGE = language || 'ru';
+      window.GAME_LANGUAGE = 'ru';
+      if (document.documentElement) document.documentElement.lang = 'ru';
+      if (sdk && typeof sdk.on === 'function') {
+        sdk.on('game_api_pause', () => { sdkPaused = true; syncAudioState(); });
+        sdk.on('game_api_resume', () => { sdkPaused = false; syncAudioState(); });
+      }
+      try { const loading = feature('LoadingAPI'); if (loading) loading.ready(); } catch (e) {}
+      return sdk;
+    }).catch(() => null);
+    // Поздний ответ SDK тоже сохраняется, даже если ожидание загрузки истекло.
+    return Promise.race([init, timeout]);
   }
 
   function feature(name) {
@@ -119,21 +181,49 @@
       if (finished) return;
       finished = true;
       adPause = false;
-      done();
+      deferredAdDone.push(done);
+      syncAudioState();
     };
     if (!ysdk || !ysdk.adv) { finish(); return; }
     try {
       ysdk.adv.showFullscreenAdv({
         callbacks: {
-          onOpen: () => { adPause = true; stopSound(); },
+          onOpen: () => {
+            if (finished) return;
+            adPause = true;
+            syncAudioState();
+          },
           onClose: () => finish(),
-          onError: () => finish()
+          onError: () => finish(),
+          onOffline: () => finish()
         }
       });
     } catch (e) {
       finish();
     }
   }
+
+  function setWipeAdPaused(paused) {
+    try {
+      const scene = ui.wipe.contentWindow;
+      if (scene && scene.azbukaSetAudioPaused) scene.azbukaSetAudioPaused(paused);
+      else if (scene && scene.azbukaSetAdPaused) scene.azbukaSetAdPaused(paused);
+    } catch (e) { /* Сцена уже закрыта. */ }
+  }
+
+  // Реклама запускается родителем: SDK един для всех режимов игры.
+  window.azbukaWipeComplete = function (detail, afterAd) {
+    if (ui.wipe.classList.contains('hidden')) return;
+    const scene = ui.wipe.contentWindow;
+    const source = ui.wipe.src;
+    gameplayStop();
+    showInterstitial(() => {
+      if (ui.wipe.classList.contains('hidden') || ui.wipe.contentWindow !== scene || ui.wipe.src !== source) return;
+      gameplayStart();
+      afterAd();
+      playVoice(letterFile(detail.char), `Буква ${detail.char}. Молодец!`);
+    });
+  };
 
   // Музыка звучит только в открытом меню; отказ автозапуска не мешает игре.
   function updateMenuMusic() {
@@ -148,7 +238,21 @@
   }
   window.addEventListener('pointerdown', updateMenuMusic);
   window.addEventListener('keydown', updateMenuMusic);
-  document.addEventListener('visibilitychange', updateMenuMusic);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && typeof document.hasFocus === 'function') windowInactive = !document.hasFocus();
+    syncAudioState();
+  });
+  function checkWindowActivity() {
+    // Фокус внутри iframe рисования не означает переход в другое окно.
+    setTimeout(() => {
+      windowInactive = typeof document.hasFocus === 'function' ? !document.hasFocus() : document.activeElement !== ui.wipe;
+      syncAudioState();
+    }, 0);
+  }
+  window.azbukaWindowActivity = checkWindowActivity;
+  window.addEventListener('blur', checkWindowActivity);
+  window.addEventListener('focus', () => { windowInactive = false; syncAudioState(); });
+  ui.wipe.addEventListener('load', syncAudioState);
 
   // ---------- Экраны ----------
   function showScreen(screen) {
@@ -247,11 +351,15 @@
     playVoice(lv.sound, `${cap(lv.word)}. Буква ${lv.letter}.`);
   }
 
+  function placeholdersEnabled() {
+    return !window.GAME_SETTINGS || window.GAME_SETTINGS.showPlaceholders !== false;
+  }
+
   function renderLetterPicture(lv) {
     const request = ++pictureRequest;
     ui.letter.textContent = lv.letter;
-    ui.letter.classList.remove('hidden');
-    ui.pic.innerHTML = `<span class="emoji">${lv.emoji}</span>`;
+    ui.letter.classList.toggle('hidden', !placeholdersEnabled());
+    ui.pic.innerHTML = placeholdersEnabled() ? `<span class="emoji">${lv.emoji}</span>` : '';
     if (!lv.image) return;
     const img = new Image();
     img.alt = lv.word;
@@ -295,6 +403,7 @@
       cardCache[letter] = (async () => {
         const full = await probeAny(`assets/img/cards/${letter}`);
         if (full) return { url: full, full: true };
+        if (!placeholdersEnabled()) return null;
         const bg = await probeAny('assets/img/cards/card');
         if (bg) return { url: bg, full: false };
         return null;
@@ -304,7 +413,9 @@
   }
 
   function applyCardSkin(btn, letter) {
+    if (!placeholdersEnabled()) btn.classList.add('asset-loading');
     cardSkin(letter).then((skin) => {
+      btn.classList.remove('asset-loading');
       if (!skin || !btn.isConnected) return;
       btn.style.backgroundImage = `url("${skin.url}")`;
       btn.classList.add('skin');
@@ -667,6 +778,7 @@
     soundOn = !soundOn;
     ui.btnSound.textContent = soundOn ? 'Звук: вкл' : 'Звук: выкл';
     if (!soundOn) stopSound();
+    syncAudioState();
   });
   ui.btnReset.addEventListener('click', () => {
     if (busy && mode === 'letters') return;
@@ -686,7 +798,5 @@
   // ---------- Старт ----------
   fitStage();
   showStart();
-  initSdk().then(() => {
-    try { const l = feature('LoadingAPI'); if (l) l.ready(); } catch (e) {}
-  });
+  initSdk();
 })();

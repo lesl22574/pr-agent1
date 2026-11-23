@@ -60,6 +60,17 @@
   var stageScale = 1;
   var particles = [];
 
+  // Если фокус был внутри iframe, сообщаем родителю и об уходе в другое окно.
+  function notifyWindowActivity() {
+    try {
+      if (window.parent && window.parent !== window && window.parent.azbukaWindowActivity) {
+        window.parent.azbukaWindowActivity();
+      }
+    } catch (e) {}
+  }
+  window.addEventListener('blur', notifyWindowActivity);
+  window.addEventListener('focus', notifyWindowActivity);
+
   /* ---------- классы (без classList, для старых браузеров) ---------- */
 
   function hasClass(el, c) { return (' ' + el.className + ' ').indexOf(' ' + c + ' ') >= 0; }
@@ -196,15 +207,31 @@
   /* ---------- звук (WebAudio с защитой для старых браузеров) ---------- */
 
   var AC = null, master = null, wipeGain = null;
+  var adAudioPaused = false;
+  window.azbukaSetAudioPaused = function (paused) {
+    adAudioPaused = paused;
+    if (master) master.gain.value = paused || state.muted ? 0 : 0.9;
+    if (AC && paused && AC.suspend) {
+      try { var suspended = AC.suspend(); if (suspended && suspended.catch) suspended.catch(function () {}); } catch (e) {}
+    }
+    if (!paused && AC) initAudio();
+  };
+  window.azbukaSetAdPaused = window.azbukaSetAudioPaused;
 
   function initAudio() {
-    if (AC) { if (AC.state === 'suspended' && AC.resume) AC.resume(); return; }
+    if (adAudioPaused) return;
+    if (AC) {
+      if ((AC.state === 'suspended' || AC.state === 'interrupted') && AC.resume) {
+        try { var resumed = AC.resume(); if (resumed && resumed.catch) resumed.catch(function () {}); } catch (e) {}
+      }
+      return;
+    }
     try {
       var Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
       AC = new Ctx();
       master = AC.createGain();
-      master.gain.value = state.muted ? 0 : 0.9;
+      master.gain.value = state.muted || adAudioPaused ? 0 : 0.9;
       master.connect(AC.destination);
       var len = AC.sampleRate;
       var buf = AC.createBuffer(1, len, AC.sampleRate);
@@ -354,7 +381,6 @@
     addClass(letterWrap, 'bounce');
     var c = fromFoam({ x: state.letterW / 2, y: state.letterH / 2 });
     spawnSparks(c.x, c.y);
-    jingle();
     var secs = (now() - state.startTime) / 1000;
     var stars = secs < 15 ? 3 : secs < 30 ? 2 : 1;
     var L = window.LETTERS[state.idx];
@@ -372,14 +398,29 @@
     // внешний контракт: событие + колбэк
     dispatchCleaned({ char: L.char, index: state.idx, stars: stars, seconds: Math.round(secs) });
 
-    // переход: поле next у буквы или общий GAME_SETTINGS.completeUrl;
-    // плейсхолдеры {char} и {index}. Без URL — победный оверлей как раньше.
-    var url = L.next || (window.GAME_SETTINGS && window.GAME_SETTINGS.completeUrl) || '';
-    if (url) {
-      url = String(url).replace('{char}', encodeURIComponent(L.char)).replace('{index}', String(state.idx));
-      setTimeout(function () { window.location.href = url; }, CFG.WIN_DELAY_GO);
+    var completed = false;
+    function afterAd() {
+      if (completed) return;
+      completed = true;
+      initAudio();
+      jingle();
+      // переход: поле next у буквы или общий GAME_SETTINGS.completeUrl;
+      // плейсхолдеры {char} и {index}. Без URL — победный оверлей как раньше.
+      var url = L.next || (window.GAME_SETTINGS && window.GAME_SETTINGS.completeUrl) || '';
+      if (url) {
+        url = String(url).replace('{char}', encodeURIComponent(L.char)).replace('{index}', String(state.idx));
+        setTimeout(function () { window.location.href = url; }, CFG.WIN_DELAY_GO);
+      } else {
+        setTimeout(function () { removeClass(winOverlay, 'hidden'); }, 700);
+      }
+    }
+    // До закрытия рекламы не воспроизводим ни фанфару, ни озвучку.
+    var bridge = null;
+    try { if (window.parent && window.parent !== window) bridge = window.parent.azbukaWipeComplete; } catch (e) {}
+    if (typeof bridge === 'function') {
+      bridge({ char: L.char, index: state.idx }, afterAd);
     } else {
-      setTimeout(function () { removeClass(winOverlay, 'hidden'); }, 700);
+      afterAd();
     }
   }
 
@@ -463,7 +504,7 @@
   });
   $('muteBtn').addEventListener('click', function () {
     state.muted = !state.muted;
-    if (master) master.gain.value = state.muted ? 0 : 0.9;
+    if (master) master.gain.value = state.muted || adAudioPaused ? 0 : 0.9;
     $('muteBtn').textContent = state.muted ? 'x' : '♪';
   });
 
