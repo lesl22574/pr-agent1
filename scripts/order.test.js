@@ -78,3 +78,18 @@ assert.equal(context.window.azbukaWipe('next'), true);
 assert.equal(test.index(), 3, 'возврат из полотенца к случайной букве');
 assert.equal(element('wipe').src, undefined);
 console.log('ORDER_OK');
+
+// В рисовании доступна та же кнопка общего HUD, что и в изучении.
+for (const lesson of [false, true]) {
+  test.startWipe(lesson);
+  assert.equal(element('hud').classList.contains('hidden'), false);
+  assert.equal(element('wipe').classList.contains('hidden'), false);
+  const savedProgress = storage.get('azbuka_progress_v1');
+  element('btnHome').handlers.click();
+  assert.equal(element('start').classList.contains('hidden'), false);
+  assert.equal(element('wipe').classList.contains('hidden'), true);
+  assert.equal(element('hud').classList.contains('hidden'), true);
+  assert.equal(element('wipe').src, undefined, 'сцена выгружена при возврате');
+  assert.equal(storage.get('azbuka_progress_v1'), savedProgress);
+}
+console.log('WIPE_HOME_OK');

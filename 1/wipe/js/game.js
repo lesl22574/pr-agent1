@@ -455,6 +455,8 @@
     loadLetter(nextIndex);
   });
   $('againBtn').addEventListener('click', function () { loadLetter(state.idx); });
+  // Во встроенной сцене используется общая кнопка меню поверх iframe.
+  if (window.parent && window.parent !== window) $('homeBtn').style.display = 'none';
   $('homeBtn').addEventListener('click', function () {
     if (window.parent && window.parent !== window && window.parent.azbukaWipe) window.parent.azbukaWipe('home');
     else window.location.href = '../index.html';

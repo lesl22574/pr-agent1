@@ -142,7 +142,7 @@ html, body {
 .btn:disabled { background: #cfc3d1; box-shadow: 0 6px 0 #aa9aab; cursor: default; }
 
 /* ---- Hud: кнопки и настройки поверх игры, не перехватывают клики ---- */
-#hud { pointer-events: none; z-index: 5; }
+#hud { pointer-events: none; z-index: 7; }
 #hud .round, #hud .panel, #hud .btn { pointer-events: auto; }
 
 /* ---- Закрепление: шарики ---- */

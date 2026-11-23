@@ -137,9 +137,10 @@
   // ---------- Экраны ----------
   function showScreen(screen) {
     [ui.game, ui.pop, ui.read, ui.start, ui.end, ui.wipe].forEach((el) => el.classList.toggle('hidden', el !== screen));
-    const inGame = (screen === ui.game || screen === ui.pop || screen === ui.read);
+    const inGame = (screen === ui.game || screen === ui.pop || screen === ui.read || screen === ui.wipe);
     ui.hud.classList.toggle('hidden', !inGame);
-    if (!inGame) ui.settings.classList.add('hidden');
+    ui.btnSettings.classList.toggle('hidden', screen === ui.wipe);
+    if (!inGame || screen === ui.wipe) ui.settings.classList.add('hidden');
   }
 
   function showStart() {
