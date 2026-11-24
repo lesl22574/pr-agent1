@@ -11,6 +11,19 @@
   const TILE = 110, GAP = 24;              // размеры плиток в режиме «Чтение»
   const TILE_Y = 470, SLOT_Y = 195;   // буквы внизу, слово собирается наверху
 
+  const AUDIO_CUES = {
+    popStart: 'assets/audio/common/pop-start.mp3',
+    readStart: 'assets/audio/common/read-start.mp3',
+    wipeStart: 'assets/audio/wipe-start.mp3',
+    wrong: 'assets/audio/common/wrong.mp3',
+    correct: 'assets/audio/common/correct.mp3',
+    chooseStart: 'assets/audio/common/choose-start.mp3'
+  };
+  const cueFile = (name) => {
+    const custom = window.GAME_SETTINGS && window.GAME_SETTINGS.audio;
+    return custom && Object.prototype.hasOwnProperty.call(custom, name) ? custom[name] : AUDIO_CUES[name];
+  };
+
   const $ = (id) => document.getElementById(id);
   const ui = {
     stage: $('stage'), bg: $('bg'), menuMusic: $('menuMusic'),
@@ -107,7 +120,7 @@
     if (!paused && pendingVoice) {
       const voice = pendingVoice;
       pendingVoice = null;
-      playVoice(voice.file, voice.text);
+      playVoice(voice.file, voice.text, voice.onComplete);
     }
   }
 
@@ -119,6 +132,7 @@
   }
 
   function speak(text) {
+    if (window.GAME_SETTINGS && window.GAME_SETTINGS.speechFallback === false) return;
     if (!canSound()) { if (soundOn) pendingVoice = { file: null, text }; return; }
     if (!('speechSynthesis' in window)) return;
     const u = new window.SpeechSynthesisUtterance(text);
@@ -144,30 +158,41 @@
   }
 
   // Проигрывает файл; если файла нет — синтез речи с текстом fallbackText
-  function playVoice(file, fallbackText) {
+  function playVoice(file, fallbackText, onComplete) {
     stopSound();
-    if (!canSound()) { if (soundOn) pendingVoice = { file, text: fallbackText }; return; }
+    if (!canSound()) { if (soundOn) pendingVoice = { file, text: fallbackText, onComplete }; return; }
     if (!file) { speak(fallbackText); return; }
     const a = new Audio(file);
     currentAudio = a;
     currentFallback = fallbackText;
+    let completed = false;
+    const finish = () => {
+      if (completed) return;
+      completed = true;
+      if (onComplete) onComplete();
+    };
+    a.addEventListener('ended', () => {
+      if (currentAudio !== a) return;
+      currentAudio = null;
+      finish();
+    });
     a.addEventListener('error', () => {
-      if (currentAudio === a) { currentAudio = null; speak(fallbackText); }
+      if (currentAudio === a) { currentAudio = null; speak(fallbackText); finish(); }
     });
     a.play().catch(() => {
       // После рекламной паузы play() может отклониться без события error.
-      if (currentAudio === a && canSound()) { currentAudio = null; speak(fallbackText); }
+      if (currentAudio === a && canSound()) { currentAudio = null; speak(fallbackText); finish(); }
     });
   }
 
   const letterFile = (letter) => {
     const level = LEVELS.find((item) => item.letter === letter.toUpperCase());
-    return (level && level.letterSound) || null;
+    return (level && level.letterSound) || `assets/audio/letters/${letter.toUpperCase()}.mp3`;
   };
   const wordFile = (word) => {
     const normalized = word.toLowerCase();
     const entry = READ_WORDS.find((item) => item.word.toLowerCase() === normalized);
-    return (entry && entry.sound) || null;
+    return (entry && entry.sound) || `assets/audio/words/${normalized}.mp3`;
   };
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -244,7 +269,7 @@
   // Вступление запускается после готовности изображений каждой новой буквы.
   window.azbukaWipeStarted = function (scene, detail) {
     if (ui.wipe.classList.contains('hidden') || ui.wipe.contentWindow !== scene) return;
-    playVoice('assets/audio/wipe-start.mp3', `Возьми полотенце и вытри букву ${detail.char}.`);
+    playVoice(cueFile('wipeStart'), `Возьми полотенце и вытри букву ${detail.char}.`);
   };
 
   // Реклама запускается родителем: SDK един для всех режимов игры.
@@ -398,7 +423,7 @@
     });
 
     // озвучка: предмет и буква
-    playVoice(lv.sound, `${cap(lv.word)}. Буква ${lv.letter}.`);
+    playVoice(lv.sound || cueFile('chooseStart'), `${cap(lv.word)}. Буква ${lv.letter}.`);
   }
 
   function placeholdersEnabled() {
@@ -494,14 +519,14 @@
     btn.classList.remove('wrong');
     void btn.offsetWidth; // перезапуск анимации
     btn.classList.add('wrong');
-    playVoice(null, 'Попробуй ещё!');
+    playVoice(cueFile('wrong'), 'Попробуй ещё!');
   }
 
   function correct(btn) {
     busy = true;
     btn.classList.add('right');
     ui.cards.querySelectorAll('.card').forEach((c) => { c.disabled = true; });
-    playVoice(null, 'Молодец!');
+    playVoice(cueFile('correct'), 'Молодец!');
     gameplayStop();
 
     // межстраничная реклама сразу после правильного ответа,
@@ -540,7 +565,7 @@
       done: false
     };
 
-    playVoice(lv.popSound || null, `Лопай шарики с буквой ${lv.letter}`);
+    playVoice(cueFile('popStart'), `Лопай шарики с буквой ${lv.letter}`);
     pop.raf = requestAnimationFrame(popFrame);
   }
 
@@ -614,7 +639,7 @@
       b.ball.classList.remove('wrong');
       void b.ball.offsetWidth;
       b.ball.classList.add('wrong');
-      playVoice(null, 'Не эта буква');
+      playVoice(cueFile('wrong'), 'Попробуй ещё!');
     }
   }
 
@@ -696,7 +721,7 @@
     });
 
     read = { word: w, letters, slots, tiles, pos: 0, busy: false };
-    playVoice(wordFile(w.word), cap(w.word));
+    playVoice(cueFile('readStart'), 'Составь слово из букв.');
   }
 
   function onTileTap(t) {
@@ -708,7 +733,7 @@
       t.el.classList.remove('wrong');
       void t.el.offsetWidth;
       t.el.classList.add('wrong');
-      playVoice(null, 'Попробуй ещё!');
+      playVoice(cueFile('wrong'), 'Попробуй ещё!');
       return;
     }
 
@@ -753,12 +778,15 @@
   }
 
   function finishWord(r) {
+    clearTimeout(readTimer);
+    readTimer = 0;
     r.busy = true;
-    playVoice(wordFile(r.word.word), cap(r.word.word));
-    readTimer = setTimeout(() => {
+    playVoice(wordFile(r.word.word), cap(r.word.word), () => {
       if (read !== r) return;
-      nextWord();
-    }, 2800);
+      readTimer = setTimeout(() => {
+        if (read === r) nextWord();
+      }, 400);
+    });
   }
 
   function nextWord() {
@@ -832,7 +860,9 @@
   updateHomeIcon();
 
   ui.readTiger.addEventListener('click', () => {
-    if (read) playVoice(wordFile(read.word.word), cap(read.word.word));
+    if (!read) return;
+    if (read.pos === read.letters.length) finishWord(read);
+    else playVoice(wordFile(read.word.word), cap(read.word.word));
   });
 
   ui.btnSettings.addEventListener('click', () => ui.settings.classList.toggle('hidden'));
