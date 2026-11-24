@@ -44,19 +44,19 @@ window.LEVELS = [
 // Слова для режима «Чтение».
 // Буквы слова перемешиваются на верхнем ряду, игрок нажимает их по порядку.
 // Без sound запись берётся из assets/audio/words/<слово>.mp3.
-// Для своей записи задайте sound: 'assets/audio/words/<слово>.mp3'.
+// Измените поле sound у нужного слова, чтобы задать любой файл: 'assets/audio/words/<слово>.mp3'.
 // Для отдельной буквы задайте letterSound у записи LEVELS.
 window.READ_WORDS = [
-  { word: 'дом' },
-  { word: 'кот' },
-  { word: 'сок' },
-  { word: 'мак' },
-  { word: 'лук' },
-  { word: 'мяч' },
+  { word: 'дом', sound: 'assets/audio/words/дом.mp3' },
+  { word: 'кот', sound: 'assets/audio/words/кот.mp3' },
+  { word: 'сок', sound: 'assets/audio/words/сок.mp3' },
+  { word: 'мак', sound: 'assets/audio/words/мак.mp3' },
+  { word: 'лук', sound: 'assets/audio/words/лук.mp3' },
+  { word: 'мяч', sound: 'assets/audio/words/мяч.mp3' },
 
-  { word: 'ёлка' },
-  { word: 'кошка' },
-  { word: 'арбуз' },
-  { word: 'тигр' },
-  { word: 'ягода' }
+  { word: 'ёлка', sound: 'assets/audio/words/ёлка.mp3' },
+  { word: 'кошка', sound: 'assets/audio/words/кошка.mp3' },
+  { word: 'арбуз', sound: 'assets/audio/words/арбуз.mp3' },
+  { word: 'тигр', sound: 'assets/audio/words/тигр.mp3' },
+  { word: 'ягода', sound: 'assets/audio/words/ягода.mp3' }
 ];
