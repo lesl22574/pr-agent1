@@ -51,7 +51,7 @@ source = source.slice(0, source.indexOf('  // ---------- Старт ----------')
   renderLevel = function () {};
   window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
     index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile, letterFile, slots: () => read.slots,
-    wrong,
+    wrong, cardSkin,
     wrongBalloon() { onBalloonTap({ target: false, ball: document.getElementById('testBall') }); },
     wrongRead() { onTileTap({ letter: '!', used: false, el: document.getElementById('testTile') }); },
     tapReadTarget() { onTileTap(read.tiles.find(tile => !tile.used && tile.letter === read.letters[read.pos])); },
@@ -290,6 +290,23 @@ console.log('HOME_ICON_OK');
   element('btnHome').handlers.click();
   assert.equal(element('menuMusic').playing, true);
   assert.equal(synthesisCalls, 0);
+  context.LEVELS[0].cardImage = 'assets/img/cards/custom-letter-a.webp';
+  let cardResult = test.cardSkin('А');
+  assert.equal(images.at(-1).src, context.LEVELS[0].cardImage);
+  images.at(-1).onload();
+  let skin = await cardResult;
+  assert.equal(skin.url, context.LEVELS[0].cardImage);
+  assert.equal(skin.full, true);
+  context.LEVELS[0].cardImage = 'assets/img/cards/another-a.png';
+  cardResult = test.cardSkin('А');
+  assert.equal(images.at(-1).src, context.LEVELS[0].cardImage, 'смена пути не использует прежний кеш');
+  images.at(-1).onerror();
+  await Promise.resolve();
+  assert.equal(images.at(-1).src, 'assets/img/cards/А.png');
+  images.at(-1).onload();
+  skin = await cardResult;
+  assert.equal(skin.url, 'assets/img/cards/А.png');
+  console.log('LEARNING_CUSTOM_CARD_IMAGE_OK');
   console.log('RECORDED_AUDIO_MODES_ADS_AND_SETTINGS_OK');
 })().catch(error => { console.error(error); process.exitCode = 1; });
 

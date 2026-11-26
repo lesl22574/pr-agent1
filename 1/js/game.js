@@ -485,8 +485,15 @@
   }
 
   function cardSkin(letter) {
-    if (!cardCache[letter]) {
-      cardCache[letter] = (async () => {
+    const level = LEVELS.find((item) => item.letter === letter);
+    const custom = level && level.cardImage;
+    const key = JSON.stringify([letter, custom || null]);
+    if (!cardCache[key]) {
+      cardCache[key] = (async () => {
+        if (custom) {
+          const url = await probeImage(custom);
+          if (url) return { url, full: true };
+        }
         const full = await probeAny(`assets/img/cards/${letter}`);
         if (full) return { url: full, full: true };
         if (!placeholdersEnabled()) return null;
@@ -495,7 +502,7 @@
         return null;
       })();
     }
-    return cardCache[letter];
+    return cardCache[key];
   }
 
   function applyCardSkin(btn, letter) {
