@@ -194,7 +194,6 @@ html, body {
   background: rgba(255,255,255,0.8); border: 6px solid #9a9a9a; border-radius: 22px;
   box-shadow: 0 8px 18px rgba(0,0,0,0.2);
 }
-.readTiger { left: 30px; top: 420px; font-size: 130px; cursor: pointer; pointer-events: auto; animation: none; }
 
 .tile {
   position: absolute; width: 110px; height: 110px;
@@ -217,9 +216,17 @@ html, body {
   position: absolute; top: 195px; width: 110px; height: 110px;
   display: flex; align-items: center; justify-content: center;
   font-family: Arial, sans-serif; font-weight: 900; font-size: 84px; line-height: 1; color: #e4262b;
-  border-bottom: 8px solid rgba(90,90,90,0.45); border-radius: 4px;
+  color: rgba(228, 38, 43, 0.25);
+  border: 5px solid transparent; border-radius: 14px;
 }
-.slot.filled { border-bottom-color: transparent; }
+.slot:not(.filled)::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -5px;
+  height: 8px; border-radius: 4px; background: rgba(90,90,90,0.45);
+}
+.slot.filled {
+  color: #e4262b; background: #fff; border-color: #5fd34a;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+}
 
 /* ---- Карточки с картинкой (assets/img/cards/<буква>.png) ---- */
 .card.skin {

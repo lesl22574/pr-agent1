@@ -31,7 +31,7 @@
     start: $('start'), end: $('end'), wipe: $('wipe'),
     count: $('count'), pic: $('pic'), letter: $('letter'), cards: $('cards'),
     popTarget: $('popTarget'),
-    readCount: $('readCount'), readLayer: $('readLayer'), readTiger: $('readTiger'),
+    readCount: $('readCount'), readLayer: $('readLayer'),
     settings: $('settings'), btnSound: $('btnSound'), btnReset: $('btnReset'),
     btnCloseSettings: $('btnCloseSettings'), btnSettings: $('btnSettings'),
     btnHome: $('btnHome'), btnPlay: $('btnPlay'), btnRead: $('btnRead'),
@@ -698,9 +698,9 @@
     const n = letters.length;
     ui.readCount.textContent = `Слово ${wordIdx + 1} из ${READ_WORDS.length}`;
 
-    // пустые места для букв (внизу, на доске)
-    const slots = letters.map((_, i) => {
-      const s = el('div', 'slot');
+    // Полупрозрачное слово-образец, закрываемое перенесёнными буквами.
+    const slots = letters.map((letter, i) => {
+      const s = el('div', 'slot', letter);
       s.style.left = slotX(n, i) + 'px';
       ui.readLayer.appendChild(s);
       return s;
@@ -858,12 +858,6 @@
   homeIcon.addEventListener('load', updateHomeIcon);
   homeIcon.addEventListener('error', updateHomeIcon);
   updateHomeIcon();
-
-  ui.readTiger.addEventListener('click', () => {
-    if (!read) return;
-    if (read.pos === read.letters.length) finishWord(read);
-    else playVoice(wordFile(read.word.word), cap(read.word.word));
-  });
 
   ui.btnSettings.addEventListener('click', () => ui.settings.classList.toggle('hidden'));
   ui.btnCloseSettings.addEventListener('click', () => ui.settings.classList.add('hidden'));

@@ -50,7 +50,7 @@ source = source.slice(0, source.indexOf('  // ---------- Старт ----------')
   const renderActualLevel = renderLevel;
   renderLevel = function () {};
   window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
-    index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile, letterFile,
+    index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile, letterFile, slots: () => read.slots,
     wrong,
     wrongBalloon() { onBalloonTap({ target: false, ball: document.getElementById('testBall') }); },
     wrongRead() { onTileTap({ letter: '!', used: false, el: document.getElementById('testTile') }); },
@@ -238,18 +238,20 @@ console.log('HOME_ICON_OK');
     assert.equal(element('read').classList.contains('hidden'), false);
     sdkEvents.game_api_resume();
     assert.equal(element('read').classList.contains('hidden'), false);
+    assert.equal(test.slots()[0].textContent, 'А', 'слово-подсказка видно до переноса');
+    assert.equal(test.slots()[0].classList.contains('filled'), false);
     test.wrongRead();
     assert.equal(lastFile(), 'assets/audio/common/wrong.mp3');
     test.tapReadTarget();
     assert.equal(lastFile(), 'letter-А.mp3');
     const timersBeforeWord = timers.length;
     element('readLayer').child.handlers.transitionend();
+    assert.equal(test.slots()[0].textContent, 'А');
+    assert.equal(test.slots()[0].classList.contains('filled'), true, 'перенесённая буква закрывает подсказку');
     assert.equal(timers.length, timersBeforeWord, 'переход ждёт окончания записи слова');
     assert.equal(lastFile(), 'assets/audio/words/а.mp3', 'готовое слово читается только после сборки');
     audio.at(-1).handlers.ended();
     assert.equal(timers.length, timersBeforeWord + 1);
-    element('readTiger').handlers.click();
-    assert.equal(lastFile(), 'assets/audio/words/а.mp3');
   }
   context.READ_WORDS[0].sound = 'custom-word.mp3';
   assert.equal(test.wordFile('а'), 'custom-word.mp3');
