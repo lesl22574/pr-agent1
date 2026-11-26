@@ -16,7 +16,8 @@
     readStart: 'assets/audio/common/read-start.mp3',
     wipeStart: 'assets/audio/wipe-start.mp3',
     wrong: 'assets/audio/common/wrong.mp3',
-    correct: 'assets/audio/common/correct.mp3',
+    chooseCorrect: 'assets/audio/common/choose-correct.mp3',
+    chooseWrong: 'assets/audio/common/choose-wrong.mp3',
     chooseStart: 'assets/audio/common/choose-start.mp3'
   };
   const cueFile = (name) => {
@@ -537,23 +538,25 @@
     btn.classList.remove('wrong');
     void btn.offsetWidth; // перезапуск анимации
     btn.classList.add('wrong');
-    playVoice(cueFile('wrong'), 'Попробуй ещё!');
+    playVoice(cueFile('chooseWrong'), 'Попробуй ещё!');
   }
 
   function correct(btn) {
     busy = true;
     btn.classList.add('right');
     ui.cards.querySelectorAll('.card').forEach((c) => { c.disabled = true; });
-    playVoice(cueFile('correct'), 'Молодец!');
-    gameplayStop();
-
-    // межстраничная реклама сразу после правильного ответа,
-    // потом закрепление — лопаем шарики с этой буквой
     const session = sceneSession;
+    const isCurrent = () => session === sceneSession && !ui.game.classList.contains('hidden');
+    const afterFeedback = () => {
+      if (isCurrent()) startPop();
+    };
+    stopSound();
+    gameplayStop();
     showInterstitial(() => {
-      if (session !== sceneSession || ui.game.classList.contains('hidden')) return;
+      if (!isCurrent()) return;
       gameplayStart();
-      startPop();
+      if (!soundOn || !cueFile('chooseCorrect')) { afterFeedback(); return; }
+      playVoice(cueFile('chooseCorrect'), 'Молодец!', afterFeedback);
     });
   }
 

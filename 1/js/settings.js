@@ -4,5 +4,10 @@
 window.GAME_SETTINGS = Object.assign({
   showPlaceholders: false,
   speechFallback: false, // Для Яндекс Игр используем готовые MP3, не синтез речи.
-  audio: {}             // Необязательные переопределения общих записей (см. AUDIO_ASSETS.md).
+  audio: {
+    // Только выбор карточек в изучении букв (пути от 1/index.html).
+    chooseCorrect: 'assets/audio/common/choose-correct.mp3',
+    chooseWrong: 'assets/audio/common/choose-wrong.mp3'
+    // Остальные записи настраиваются здесь же — см. AUDIO_ASSETS.md.
+  }
 }, window.GAME_SETTINGS || {});
