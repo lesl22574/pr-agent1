@@ -101,7 +101,12 @@
       if (currentAudio && !currentAudio.ended && !pendingVoice) {
         const audio = currentAudio;
         const attempt = audio.play();
-        if (attempt && attempt.catch) attempt.catch(() => {
+        if (attempt && attempt.catch) attempt.catch((error) => {
+          if (currentAudio === audio && error && error.name === 'NotAllowedError') {
+            currentAudio = null;
+            pendingVoice = audio.retryVoice;
+            return;
+          }
           if (currentAudio === audio && canSound()) {
             currentAudio = null;
             speak(currentFallback);
@@ -165,6 +170,7 @@
     const a = new Audio(file);
     currentAudio = a;
     currentFallback = fallbackText;
+    a.retryVoice = { file, text: fallbackText, onComplete };
     let completed = false;
     const finish = () => {
       if (completed) return;
@@ -179,9 +185,14 @@
     a.addEventListener('error', () => {
       if (currentAudio === a) { currentAudio = null; speak(fallbackText); finish(); }
     });
-    a.play().catch(() => {
-      // После рекламной паузы play() может отклониться без события error.
-      if (currentAudio === a && canSound()) { currentAudio = null; speak(fallbackText); finish(); }
+    a.play().catch((error) => {
+      if (currentAudio !== a) return;
+      if (error && error.name === 'NotAllowedError') {
+        currentAudio = null;
+        pendingVoice = a.retryVoice;
+        return; // Повторим по нажатию, не пропуская озвучку и уровень.
+      }
+      if (canSound()) { currentAudio = null; speak(fallbackText); finish(); }
     });
   }
 
@@ -785,14 +796,25 @@
   }
 
   function finishWord(r) {
+    if (r.finished) return;
+    r.finished = true;
     clearTimeout(readTimer);
     readTimer = 0;
     r.busy = true;
-    playVoice(wordFile(r.word.word), cap(r.word.word), () => {
-      if (read !== r) return;
-      readTimer = setTimeout(() => {
-        if (read === r) nextWord();
-      }, 400);
+    const session = sceneSession;
+    stopSound();
+    gameplayStop();
+    showInterstitial(() => {
+      if (read !== r || session !== sceneSession || ui.read.classList.contains('hidden')) return;
+      gameplayStart();
+      const afterWord = () => {
+        if (read !== r || session !== sceneSession) return;
+        readTimer = setTimeout(() => {
+          if (read === r && session === sceneSession) nextWord();
+        }, 400);
+      };
+      if (!soundOn) { afterWord(); return; }
+      playVoice(wordFile(r.word.word), cap(r.word.word), afterWord);
     });
   }
 
