@@ -72,7 +72,7 @@ assert.equal(storage.get('azbuka_progress_v1'), '2');
 test.startLetters(true);
 assert.equal(test.index(), 0);
 test.startWipe(false);
-assert.equal(element('wipe').src, 'wipe/scene.html#%D0%90&ordered');
+assert.equal(element('wipe').src, 'wipe/scene.html#&ordered');
 flag.checked = false;
 random = 0.99;
 test.startLetters(false);
@@ -91,7 +91,7 @@ for (let previous = 0; previous < 4; previous++) {
 }
 random = 0.99;
 test.startWipe(false);
-assert.equal(element('wipe').src, 'wipe/scene.html#%D0%92&random');
+assert.equal(element('wipe').src, 'wipe/scene.html#&random');
 test.startWipe(true);
 assert.equal(element('wipe').src, 'wipe/scene.html#%D0%90&random');
 assert.equal(context.window.azbukaWipe('next'), true);

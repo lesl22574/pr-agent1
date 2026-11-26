@@ -60,7 +60,7 @@ let Tnow = 0;
 const winH = {};
 global.window = {
   LETTERS: null,
-  location: { hash: process.env.RANDOM_ORDER ? '&random' : '&ordered', href: '' },
+  location: { hash: process.env.RANDOM_ORDER ? (process.env.DYNAMIC_LETTERS ? '#&random' : '#%D0%90&random') : '#&ordered', href: '' },
   requestAnimationFrame: (cb) => { rafQueue.push(cb); return rafQueue.length; },
   addEventListener: (t, f) => { (winH[t] = winH[t] || []).push(f); },
   dispatchEvent: (e) => { (winH[e.type] || []).forEach((f) => f(e)); return true; },
@@ -82,11 +82,19 @@ const winFire = (t, e) => (winH[t] || []).forEach((f) => f(e));
 if (process.env.RANDOM_ORDER) Math.random = () => 0.99;
 
 eval(fs.readFileSync(path.join(ROOT, 'js', 'letters.js'), 'utf8'));
+if (process.env.DYNAMIC_LETTERS) {
+  window.LETTERS.push(
+    { char: 'Г', foam: 'test/g_foam.png', clean: 'test/g_clean.png' },
+    { char: 'Д', foam: 'test/d_foam.png', clean: 'test/d_clean.png' }
+  );
+}
+const initialLetter = process.env.DYNAMIC_LETTERS && process.env.RANDOM_ORDER ? 'Д' : 'А';
+
 let adContinuation;
 let adCalls = 0;
 if (process.env.AD_BRIDGE) {
   window.parent = { azbukaWipeComplete(detail, done) {
-    if (detail.char !== 'А') throw new Error('буква для рекламы');
+    if (detail.char !== initialLetter) throw new Error('буква для рекламы');
     adCalls++;
     adContinuation = done;
   } };
@@ -128,8 +136,8 @@ const ev = (x, y) => ({ clientX: x, clientY: y, pointerId: 1, preventDefault() {
   if (get('foamCanvas').style.opacity !== '0') throw new Error('пена не скрыта');
   if (has('towelWrap', 'drag')) throw new Error('полотенце не отпущено после победы');
   if (cleaned.length !== 2) throw new Error('событие letter:cleaned и колбэк не вызваны');
-  if (cleaned[0].char !== 'А' || typeof cleaned[0].stars !== 'number') throw new Error('detail события некорректен');
-  if (cleaned[1][0] !== 'cb' || cleaned[1][1].char !== 'А') throw new Error('onLetterCleaned не вызван');
+  if (cleaned[0].char !== initialLetter || typeof cleaned[0].stars !== 'number') throw new Error('detail события некорректен');
+  if (cleaned[1][0] !== 'cb' || cleaned[1][1].char !== initialLetter) throw new Error('onLetterCleaned не вызван');
   if (process.env.AD_BRIDGE) {
     if (adCalls !== 1 || window.jingles) throw new Error('звук до рекламы');
     if (!has('winOverlay', 'hidden')) throw new Error('результат до рекламы');
@@ -144,16 +152,31 @@ const ev = (x, y) => ({ clientX: x, clientY: y, pointerId: 1, preventDefault() {
   if (get('winStars').children.length !== 3) throw new Error('звёзды не построены');
   get('nextBtn').fire('click');
   frames(5);
-  if (!get('cleanLetter').src.includes(process.env.RANDOM_ORDER ? 'v_clean' : 'b_clean')) throw new Error('следующая буква не загрузилась');
+  if (!get('cleanLetter').src.includes(process.env.RANDOM_ORDER ? (process.env.DYNAMIC_LETTERS ? 'g_clean' : 'v_clean') : 'b_clean')) throw new Error('следующая буква не загрузилась');
   const navigation = [];
-  window.parent.azbukaWipe = (action) => navigation.push(action);
+  window.parent.azbukaWipe = (action) => { navigation.push(action); return false; };
   get('homeBtn').fire('click');
   get('nextBtn').fire('click');
   if (navigation.join(',') !== 'home,next') throw new Error('навигация общего меню');
   get('muteBtn').fire('click');
   get('againBtn').fire('click');
   frames(10);
-  if (startedLetters[0] !== 'А' || startedLetters.length < 3) throw new Error('вступление новой буквы и повтора');
+  if (startedLetters[0] !== initialLetter || startedLetters.length < 3) throw new Error('вступление новой буквы и повтора');
+  if (process.env.DYNAMIC_LETTERS) {
+    for (let i = 0; i < window.LETTERS.length + 1; i++) {
+      const previous = startedLetters.at(-1);
+      get('nextBtn').fire('click');
+      const current = startedLetters.at(-1);
+      if (process.env.RANDOM_ORDER) {
+        if (current === previous) throw new Error('повтор случайной буквы');
+      } else {
+        const index = window.LETTERS.findIndex(letter => letter.char === previous);
+        if (current !== window.LETTERS[(index + 1) % window.LETTERS.length].char) throw new Error('расширенный набор');
+      }
+    }
+    if (!startedLetters.includes('Г') || !startedLetters.includes('Д')) throw new Error('добавленные буквы не доступны');
+    console.log('DYNAMIC_LETTERS_OK');
+  }
   console.log('SMOKE_OK');
   process.exit(0);
 })().catch((e) => { console.error('SMOKE_FAIL:', e); process.exit(1); });

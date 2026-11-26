@@ -605,7 +605,8 @@
   var launchHash = (window.location && window.location.hash) || '';
   var requestedChar = '';
   try { requestedChar = decodeURIComponent(launchHash.slice(1).split('&')[0]); } catch (e) {}
-  var initialIndex = 0;
+  var initialIndex = !requestedChar && launchHash.indexOf('&random') !== -1
+    ? Math.floor(Math.random() * window.LETTERS.length) : 0;
   for (var li = 0; li < window.LETTERS.length; li++) {
     if (window.LETTERS[li].char === requestedChar) initialIndex = li;
   }

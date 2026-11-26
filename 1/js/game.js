@@ -846,7 +846,8 @@
     wipeLesson = lesson;
     showScreen(ui.wipe);
     gameplayStart();
-    const letter = lesson ? LEVELS[levelIdx].letter : ['А', 'Б', 'В'][$('treats').checked ? 0 : randomLetterIndex(3)];
+    // Состав и размер набора известны самой сцене из wipe/js/letters.js.
+    const letter = lesson ? LEVELS[levelIdx].letter : '';
     ui.wipe.src = 'wipe/scene.html#' + encodeURIComponent(letter) + ($('treats').checked ? '&ordered' : '&random') + (soundOn ? '' : '&muted');
   }
 
