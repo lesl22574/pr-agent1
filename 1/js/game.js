@@ -1011,5 +1011,6 @@
   // ---------- Старт ----------
   fitStage();
   showStart();
+  if (window.preloadGameBackgrounds) window.preloadGameBackgrounds();
   initSdk();
 })();
