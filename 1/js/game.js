@@ -598,6 +598,8 @@
     stopFireworks();
     const configured = Number(window.GAME_SETTINGS && window.GAME_SETTINGS.fireworksDuration);
     const duration = Number.isFinite(configured) && configured > 0 ? configured : 4000;
+    const sparks = [];
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const colors = ['#ffe968', '#ff85d4', '#86f7ff', '#c7ff8a', '#ffffff', '#c5b0ff'];
     for (let burst = 0; burst < 6; burst++) {
       const center = el('div', 'firework');
@@ -606,16 +608,17 @@
       for (let ray = 0; ray < 24; ray++) {
         const spark = el('span', 'fireworkSpark');
         const angle = Math.PI * 2 * ray / 24;
-        const radius = 90 + Math.random() * 90;
-        spark.style.setProperty('--dx', Math.cos(angle) * radius + 'px');
-        spark.style.setProperty('--dy', Math.sin(angle) * radius + 'px');
-        spark.style.setProperty('--delay', (burst * 0.22) + 's');
-        spark.style.setProperty('--spark-color', colors[burst]);
+        const radius = (90 + Math.random() * 90) * (reducedMotion ? 0.5 : 1);
+        spark.style.background = colors[burst];
+        spark.style.boxShadow = '0 0 9px 3px ' + colors[burst];
+        sparks.push({ el: spark, dx: Math.cos(angle) * radius,
+          dy: Math.sin(angle) * radius, delay: burst * 220,
+          angle: angle * 180 / Math.PI });
         center.appendChild(spark);
       }
       ui.fireworksParticles.appendChild(center);
     }
-    celebration = { session: sceneSession, elapsed: 0, last: null, duration, raf: 0 };
+    celebration = { session: sceneSession, elapsed: 0, last: null, duration, sparks, raf: 0 };
     ui.fireworks.classList.remove('hidden');
     ui.fireworksAudio.loop = true;
     if (cueFile('fireworks')) ui.fireworksAudio.src = cueFile('fireworks');
@@ -629,6 +632,19 @@
       else {
         if (current.last !== null) current.elapsed += time - current.last;
         current.last = time;
+      }
+      // Движение искр не зависит от CSS keyframes или настроек ОС,
+      // отключающих CSS-анимацию. При reduce уменьшаем размах, не замираем.
+      for (const spark of current.sparks) {
+        const age = current.elapsed - spark.delay;
+        if (age < 0) { spark.el.style.opacity = '0'; continue; }
+        const progress = (age % 1800) / 1800;
+        const distance = 1 - Math.pow(1 - progress, 2);
+        const x = spark.dx * distance;
+        const y = spark.dy * distance + progress * progress * 55;
+        spark.el.style.opacity = String(Math.min(1, progress * 15) * (1 - progress));
+        spark.el.style.transform = 'translate(' + x + 'px,' + y + 'px) rotate(' +
+          spark.angle + 'deg) scale(' + (1.3 - progress) + ')';
       }
       if (current.elapsed >= current.duration) { finishFireworks(); return; }
       current.raf = requestAnimationFrame(frame);

@@ -298,22 +298,14 @@ html, body {
 .card.asset-loading { visibility: hidden; pointer-events: none; }
 
 
-/* Праздничный экран после озвучки правильной карточки. Домик остаётся доступен. */
-#fireworks { z-index: 6; background: rgba(87, 30, 141, 0.72); overflow: hidden; }
+/* Полноэкранный салют вне масштабируемого #stage. Клики по домику проходят. */
+#fireworks {
+  position: fixed; inset: 0; width: 100%; height: 100%; z-index: 6;
+  background: rgba(87, 30, 141, 0.72); overflow: hidden; pointer-events: none;
+}
 #fireworksParticles { position: absolute; inset: 0; pointer-events: none; }
 .firework { position: absolute; width: 0; height: 0; }
 .fireworkSpark {
-  position: absolute; width: 8px; height: 8px; border-radius: 50%; opacity: 0;
-  background: var(--spark-color); box-shadow: 0 0 9px 3px var(--spark-color);
-  animation: fireworkBurst 1.8s ease-out var(--delay) infinite;
-}
-@keyframes fireworkBurst {
-  0% { opacity: 0; transform: translate(0, 0) scale(0.2); }
-  10% { opacity: 1; }
-  75% { opacity: 0.9; }
-  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
-}
-#fireworks.paused .fireworkSpark { animation-play-state: paused; }
-@media (prefers-reduced-motion: reduce) {
-  .fireworkSpark { animation: none; opacity: 0.65; transform: translate(var(--dx), var(--dy)); }
+  position: absolute; left: 0; top: 0; width: 6px; height: 9px;
+  border-radius: 50%; opacity: 0; will-change: transform, opacity;
 }

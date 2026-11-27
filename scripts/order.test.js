@@ -52,7 +52,7 @@ source = source.slice(0, source.indexOf('  // ---------- Старт ----------')
   renderLevel = function () {};
   window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
     index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile, letterFile, slots: () => read.slots,
-    wrong, cardSkin, finishFireworks,
+    wrong, cardSkin, finishFireworks, fireworksState: () => celebration,
     wrongBalloon() { onBalloonTap({ target: false, ball: document.getElementById('testBall') }); },
     wrongRead() { onTileTap({ letter: '!', used: false, el: document.getElementById('testTile') }); },
     tapReadTarget() { onTileTap(read.tiles.find(tile => !tile.used && tile.letter === read.letters[read.pos])); },
@@ -225,6 +225,11 @@ console.log('HOME_ICON_OK');
   documentEvents.visibilitychange();
   assert.equal(element('fireworksAudio').playing, true);
   animationFrames.pop()(0);
+  const firstSpark = test.fireworksState().sparks[0].el;
+  const initialTransform = firstSpark.style.transform;
+  animationFrames.pop()(700);
+  assert.notEqual(firstSpark.style.transform, initialTransform, 'искры действительно двигаются');
+  assert.ok(Number(firstSpark.style.opacity) > 0, 'искры видимы в полёте');
   animationFrames.pop()(3999);
   assert.equal(element('fireworks').classList.contains('hidden'), false);
   animationFrames.pop()(4000);
@@ -261,10 +266,17 @@ console.log('HOME_ICON_OK');
   const audioBeforeFeedbackEnd = audio.length;
   audio.at(-1).handlers.ended();
   assert.equal(audio.length, audioBeforeFeedbackEnd, 'шарики не открываются после выхода');
+  context.window.matchMedia = () => ({ matches: true });
   test.startLetters(true);
   test.correct(element('testCard'));
   finishAd();
   audio.at(-1).handlers.ended();
+  animationFrames.pop()(0);
+  const reducedSpark = test.fireworksState().sparks[0].el;
+  const reducedTransform = reducedSpark.style.transform;
+  animationFrames.pop()(500);
+  assert.notEqual(reducedSpark.style.transform, reducedTransform, 'reduce уменьшает размах, а не останавливает движение');
+  delete context.window.matchMedia;
   assert.equal(element('fireworksAudio').playing, true);
   const previousFireworkFrame = animationFrames.pop();
   element('btnHome').handlers.click();
@@ -433,3 +445,11 @@ assert.equal(element('letter').classList.contains('hidden'), false);
 assert.equal(element('letter').textContent, 'А');
 assert.equal(element('pic').innerHTML, '');
 console.log('MISSING_ART_LETTER_OK');
+
+// Фон не ограничен размерами масштабируемого stage.
+const mainHtml = fs.readFileSync(path.join(__dirname, '../1/index.html'), 'utf8');
+const mainCss = fs.readFileSync(path.join(__dirname, '../1/css/style.css'), 'utf8');
+assert.ok(mainHtml.indexOf('id="fireworks"') < mainHtml.indexOf('id="stage"'));
+assert.match(mainCss, /#fireworks\s*\{[^}]*position:\s*fixed/);
+assert.match(mainCss, /#fireworks\s*\{[^}]*inset:\s*0/);
+console.log('FIREWORKS_VIEWPORT_OK');
