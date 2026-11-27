@@ -1,0 +1,10 @@
+/* В том числе запрет системной выноски изображения при удержании в iOS. */
+html, body, body * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+img { -webkit-user-drag: none; }
+html, body { overscroll-behavior: none; }
+#stage { touch-action: none; }
