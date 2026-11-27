@@ -8,7 +8,7 @@ function element(id) {
   if (!elements.has(id)) {
     const classes = new Set();
     elements.set(id, {
-      checked: false, style: {}, handlers: {},
+      checked: false, style: { setProperty(name, value) { this[name] = value; } }, handlers: {},
       play() { this.playing = true; return Promise.resolve(); },
       pause() { this.playing = false; },
       classList: {
@@ -33,6 +33,7 @@ const math = Object.create(Math);
 math.random = () => random;
 const images = [];
 const timers = [];
+const animationFrames = [];
 const windowEvents = {};
 const documentEvents = {};
 const context = vm.createContext({
@@ -42,7 +43,7 @@ const context = vm.createContext({
   localStorage: { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) },
   LEVELS: ['А', 'Б', 'В', 'Г'].map(letter => ({ letter, word: letter, image: letter + '.png', sound: letter + '.mp3', letterSound: 'letter-' + letter + '.mp3' })),
   READ_WORDS: [{ word: 'а', sound: 'assets/audio/words/а.mp3' }], Math: math, clearTimeout() {},
-  requestAnimationFrame() { return 1; }, cancelAnimationFrame() {}, setTimeout(fn) { timers.push(fn); },
+  requestAnimationFrame(callback) { animationFrames.push(callback); return animationFrames.length; }, cancelAnimationFrame() {}, setTimeout(fn) { timers.push(fn); },
 });
 let source = fs.readFileSync(path.join(__dirname, '../1/js/game.js'), 'utf8');
 // Не запускаем Canvas/озвучку; тестируем реальные функции выбора и переходов.
@@ -51,7 +52,7 @@ source = source.slice(0, source.indexOf('  // ---------- Старт ----------')
   renderLevel = function () {};
   window.test = { startLetters, advanceLevel, startWipe, randomLetterIndex, renderLetterPicture,
     index: () => levelIdx, renderActualLevel, correct, startPop, startRead, wordFile, letterFile, slots: () => read.slots,
-    wrong, cardSkin,
+    wrong, cardSkin, finishFireworks,
     wrongBalloon() { onBalloonTap({ target: false, ball: document.getElementById('testBall') }); },
     wrongRead() { onTileTap({ letter: '!', used: false, el: document.getElementById('testTile') }); },
     tapReadTarget() { onTileTap(read.tiles.find(tile => !tile.used && tile.letter === read.letters[read.pos])); },
@@ -211,6 +212,25 @@ console.log('HOME_ICON_OK');
   finishAd();
   assert.equal(lastFile(), 'assets/audio/common/choose-correct.mp3');
   audio.at(-1).handlers.ended();
+  assert.equal(element('fireworks').classList.contains('hidden'), false);
+  assert.equal(element('fireworksAudio').src, 'assets/audio/common/fireworks.mp3');
+  assert.equal(element('fireworksAudio').loop, true);
+  assert.equal(element('fireworksAudio').playing, true);
+  assert.notEqual(lastFile(), 'assets/audio/common/pop-start.mp3', 'шарики ждут окончания салюта');
+  context.document.hidden = true;
+  documentEvents.visibilitychange();
+  assert.equal(element('fireworksAudio').playing, false);
+  assert.equal(element('fireworks').classList.contains('paused'), true);
+  context.document.hidden = false;
+  documentEvents.visibilitychange();
+  assert.equal(element('fireworksAudio').playing, true);
+  animationFrames.pop()(0);
+  animationFrames.pop()(3999);
+  assert.equal(element('fireworks').classList.contains('hidden'), false);
+  animationFrames.pop()(4000);
+  assert.equal(element('fireworks').classList.contains('hidden'), true);
+  assert.equal(element('fireworksAudio').playing, false);
+  assert.equal(element('fireworksAudio').currentTime, 0);
   assert.equal(lastFile(), 'assets/audio/common/pop-start.mp3');
   test.tapTarget();
   assert.equal(lastFile(), 'letter-А.mp3');
@@ -241,6 +261,17 @@ console.log('HOME_ICON_OK');
   const audioBeforeFeedbackEnd = audio.length;
   audio.at(-1).handlers.ended();
   assert.equal(audio.length, audioBeforeFeedbackEnd, 'шарики не открываются после выхода');
+  test.startLetters(true);
+  test.correct(element('testCard'));
+  finishAd();
+  audio.at(-1).handlers.ended();
+  assert.equal(element('fireworksAudio').playing, true);
+  const previousFireworkFrame = animationFrames.pop();
+  element('btnHome').handlers.click();
+  assert.equal(element('fireworksAudio').playing, false);
+  assert.equal(element('fireworks').classList.contains('hidden'), true);
+  previousFireworkFrame(10000);
+  assert.equal(element('start').classList.contains('hidden'), false, 'старый салют не открывает шарики');
   context.window.GAME_SETTINGS.audio.chooseCorrect = 'assets/audio/common/choose-correct.mp3';
   context.window.GAME_SETTINGS.audio.popStart = 'custom-pop.mp3';
   test.startPop();

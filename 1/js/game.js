@@ -16,6 +16,7 @@
     readStart: 'assets/audio/common/read-start.mp3',
     wipeStart: 'assets/audio/wipe-start.mp3',
     wrong: 'assets/audio/common/wrong.mp3',
+    fireworks: 'assets/audio/common/fireworks.mp3',
     chooseCorrect: 'assets/audio/common/choose-correct.mp3',
     chooseWrong: 'assets/audio/common/choose-wrong.mp3',
     chooseStart: 'assets/audio/common/choose-start.mp3'
@@ -28,6 +29,7 @@
   const $ = (id) => document.getElementById(id);
   const ui = {
     stage: $('stage'), bg: $('bg'), menuMusic: $('menuMusic'),
+    fireworks: $('fireworks'), fireworksParticles: $('fireworksParticles'), fireworksAudio: $('fireworksAudio'),
     game: $('game'), pop: $('pop'), read: $('read'), hud: $('hud'),
     start: $('start'), end: $('end'), wipe: $('wipe'),
     count: $('count'), pic: $('pic'), letter: $('letter'), cards: $('cards'),
@@ -64,6 +66,7 @@
   let readTimer = 0;
   let pictureRequest = 0;
   let sceneSession = 0;
+  let celebration = null;
 
   // ---------- Масштабирование под окно ----------
   function fitStage() {
@@ -118,6 +121,7 @@
     audioPaused = paused;
     setWipeAdPaused(paused);
     updateMenuMusic();
+    updateFireworks();
     // Сначала продолжаем текущее задание после рекламы: оно может заменить
     // сохранённую реплику старого экрана своей новой инструкцией.
     if (!adPause && !backgroundPaused()) {
@@ -339,6 +343,7 @@
 
   // ---------- Экраны ----------
   function showScreen(screen) {
+    if (screen !== ui.game) stopFireworks();
     [ui.game, ui.pop, ui.read, ui.start, ui.end, ui.wipe].forEach((el) => el.classList.toggle('hidden', el !== screen));
     ui.bg.classList.toggle('learning', screen === ui.game || screen === ui.pop || screen === ui.read || (screen === ui.end && mode !== 'wipe'));
     ui.bg.classList.toggle('wiping', screen === ui.wipe);
@@ -350,6 +355,7 @@
   }
 
   function showStart() {
+    stopFireworks();
     sceneSession++;
     ui.wipe.removeAttribute('src');
     wipeLesson = false;
@@ -364,6 +370,7 @@
   }
 
   function startLetters(fromZero) {
+    stopFireworks();
     sceneSession++;
     stopPop();
     stopRead();
@@ -378,6 +385,7 @@
   }
 
   function startRead(fromZero) {
+    stopFireworks();
     sceneSession++;
     stopPop();
     stopRead();
@@ -548,7 +556,7 @@
     const session = sceneSession;
     const isCurrent = () => session === sceneSession && !ui.game.classList.contains('hidden');
     const afterFeedback = () => {
-      if (isCurrent()) startPop();
+      if (isCurrent()) startFireworks();
     };
     stopSound();
     gameplayStop();
@@ -558,6 +566,74 @@
       if (!soundOn || !cueFile('chooseCorrect')) { afterFeedback(); return; }
       playVoice(cueFile('chooseCorrect'), 'Молодец!', afterFeedback);
     });
+  }
+
+  // ---------- Салют после верной карточки ----------
+  function updateFireworks() {
+    const inactive = adPause || backgroundPaused();
+    ui.fireworks.classList.toggle('paused', inactive);
+    if (celebration && inactive) celebration.last = null;
+    if (celebration && canSound() && cueFile('fireworks')) {
+      const attempt = ui.fireworksAudio.play();
+      if (attempt && attempt.catch) attempt.catch(() => {});
+    } else ui.fireworksAudio.pause();
+  }
+
+  function stopFireworks() {
+    if (celebration) cancelAnimationFrame(celebration.raf);
+    celebration = null;
+    ui.fireworks.classList.add('hidden');
+    ui.fireworksParticles.innerHTML = '';
+    ui.fireworksAudio.pause();
+    try { ui.fireworksAudio.currentTime = 0; } catch (e) {}
+  }
+
+  function finishFireworks() {
+    const current = celebration;
+    stopFireworks();
+    if (current && current.session === sceneSession && !ui.game.classList.contains('hidden')) startPop();
+  }
+
+  function startFireworks() {
+    stopFireworks();
+    const configured = Number(window.GAME_SETTINGS && window.GAME_SETTINGS.fireworksDuration);
+    const duration = Number.isFinite(configured) && configured > 0 ? configured : 4000;
+    const colors = ['#ffe968', '#ff85d4', '#86f7ff', '#c7ff8a', '#ffffff', '#c5b0ff'];
+    for (let burst = 0; burst < 6; burst++) {
+      const center = el('div', 'firework');
+      center.style.left = (16 + (burst % 3) * 33) + '%';
+      center.style.top = (25 + Math.floor(burst / 3) * 43) + '%';
+      for (let ray = 0; ray < 24; ray++) {
+        const spark = el('span', 'fireworkSpark');
+        const angle = Math.PI * 2 * ray / 24;
+        const radius = 90 + Math.random() * 90;
+        spark.style.setProperty('--dx', Math.cos(angle) * radius + 'px');
+        spark.style.setProperty('--dy', Math.sin(angle) * radius + 'px');
+        spark.style.setProperty('--delay', (burst * 0.22) + 's');
+        spark.style.setProperty('--spark-color', colors[burst]);
+        center.appendChild(spark);
+      }
+      ui.fireworksParticles.appendChild(center);
+    }
+    celebration = { session: sceneSession, elapsed: 0, last: null, duration, raf: 0 };
+    ui.fireworks.classList.remove('hidden');
+    ui.fireworksAudio.loop = true;
+    if (cueFile('fireworks')) ui.fireworksAudio.src = cueFile('fireworks');
+    else ui.fireworksAudio.removeAttribute('src');
+    ui.fireworksAudio.volume = 0.6;
+    updateFireworks();
+    const current = celebration;
+    function frame(time) {
+      if (celebration !== current) return;
+      if (adPause || backgroundPaused()) current.last = null;
+      else {
+        if (current.last !== null) current.elapsed += time - current.last;
+        current.last = time;
+      }
+      if (current.elapsed >= current.duration) { finishFireworks(); return; }
+      current.raf = requestAnimationFrame(frame);
+    }
+    current.raf = requestAnimationFrame(frame);
   }
 
   // ---------- Закрепление: лопаем шарики ----------
@@ -839,6 +915,7 @@
 
   // ---------- Кнопки ----------
   function startWipe(lesson) {
+    stopFireworks();
     sceneSession++;
     stopPop();
     stopRead();

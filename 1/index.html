@@ -7,7 +7,7 @@
   <!-- SDK Яндекс Игр (GameReady) -->
   <script defer src="https://yandex.ru/games/sdk/v2"></script>
   <link rel="preload" href="assets/fonts/frankc.woff2?v=2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <div id="bg" aria-hidden="true"></div>
@@ -27,6 +27,11 @@
 
       <div id="cards"></div>
     </div>
+
+    <div id="fireworks" class="screen hidden" role="status" aria-label="Салют за правильный ответ">
+      <div id="fireworksParticles" aria-hidden="true"></div>
+    </div>
+    <audio id="fireworksAudio" preload="none" loop></audio>
 
     <!-- ===== Закрепление: лопаем шарики с буквой ===== -->
     <div id="pop" class="screen hidden">
@@ -85,8 +90,8 @@
     </div>
   </div>
 
-  <script defer src="js/settings.js?v=20261123-card-feedback"></script>
+  <script defer src="js/settings.js?v=20261123-fireworks"></script>
   <script defer src="js/levels.js?v=20261123-mp3"></script>
-  <script defer src="js/game.js?v=20261123-wipe-full-set"></script>
+  <script defer src="js/game.js?v=20261123-fireworks"></script>
 </body>
 </html>

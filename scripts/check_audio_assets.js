@@ -11,6 +11,7 @@ const { GAME_SETTINGS: settings, LEVELS: levels, READ_WORDS: words } = context.w
 const defaults = {
   popStart: 'assets/audio/common/pop-start.mp3', readStart: 'assets/audio/common/read-start.mp3',
   wipeStart: 'assets/audio/wipe-start.mp3', wrong: 'assets/audio/common/wrong.mp3',
+  fireworks: 'assets/audio/common/fireworks.mp3',
   chooseCorrect: 'assets/audio/common/choose-correct.mp3',
   chooseWrong: 'assets/audio/common/choose-wrong.mp3', chooseStart: 'assets/audio/common/choose-start.mp3',
 };
